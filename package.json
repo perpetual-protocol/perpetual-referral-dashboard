@@ -1,0 +1,30 @@
+{
+  "name": "perpetual-referral-dashboard",
+  "scripts": {
+    "start": "parcel serve ./src/index.html",
+    "build": "parcel build ./src/index.html",
+    "tailwind": "npx tailwindcss -o ./src/styles/tailwind.css"
+  },
+  "dependencies": {
+    "@ethersproject/providers": "^5.4.0",
+    "@types/react": "^17.0.11",
+    "@web3-react/core": "^6.1.9",
+    "@web3-react/injected-connector": "^6.0.7",
+    "autoprefixer": "^10.2.6",
+    "ethers": "^5.4.0",
+    "framer-motion": "^4.1.17",
+    "postcss": "^8.3.5",
+    "react": "^16.13.1",
+    "react-dom": "^16.13.1",
+    "react-jazzicon": "^0.1.3",
+    "tailwindcss": "^2.2.4",
+    "web3-react": "^5.0.5",
+    "wouter": "^2.7.4"
+  },
+  "devDependencies": {
+    "@parcel/transformer-svg-react": "^2.0.0-nightly.1739",
+    "@parcel/transformer-svgo": "^2.0.0-nightly.1739",
+    "parcel": "^2.0.0-beta.3.1",
+    "parcel-resolver-tspaths": "^0.0.5"
+  }
+}

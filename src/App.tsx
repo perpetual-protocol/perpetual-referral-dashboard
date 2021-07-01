@@ -15,7 +15,7 @@ export default function App() {
     <Web3ReactProvider getLibrary={getLibrary}>
       <div className='flex flex-col w-full h-full bg-perp-body font-body subpixel-antialiased'>
         <AppNav />
-        <Route path='/home' component={Home} />
+        <Home />
       </div>
     </Web3ReactProvider>
   );

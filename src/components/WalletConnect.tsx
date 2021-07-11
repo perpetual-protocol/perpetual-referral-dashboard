@@ -11,7 +11,7 @@ export enum ConnectorNames {
 }
 
 export const injected = new InjectedConnector({
-  supportedChainIds: [1, 3, 4, 5, 42]
+  supportedChainIds: [1, 3, 4, 5, 42, 1337]
 });
 
 export const connectorsByName: { [connectorName in ConnectorNames]: any } = {

@@ -18,7 +18,7 @@ export default function ConnectWallet(props: Props) {
     activate(connectorsByName[name]);
   };
   return (
-    <>
+    <div style={{ maxWidth: '1200px' }} className='w-full flex flex-col items-center justify-center mt-20 mx-auto'>
       <div className='mb-12'>
         <DiamondHands />
       </div>
@@ -27,9 +27,12 @@ export default function ConnectWallet(props: Props) {
           Please connect your wallet
         </h1>
       </div>
-      <Button onClick={() => activateWallet(ConnectorNames.Injected)} icon={<Wallet />}>
+      <Button
+        onClick={() => activateWallet(ConnectorNames.Injected)}
+        icon={<Wallet />}
+      >
         Connect your wallet
       </Button>
-    </>
+    </div>
   );
 }

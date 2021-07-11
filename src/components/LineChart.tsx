@@ -75,7 +75,7 @@ function getOption(data: ChartData) {
 }
 
 export default function LineChart(props: Props) {
-  const { data } = props;
+  const { data = { values: [], axis: [] } } = props;
   const [chartInstance, setChartInstance] = useState<echarts.ECharts>();
   const chartRef = useRef();
 
@@ -84,7 +84,7 @@ export default function LineChart(props: Props) {
       const chart = echarts.init(chartRef.current);
       chart.setOption(getOption(data));
     }
-  }, [data.axis, data.values]);
+  }, [data?.axis, data?.values]);
 
   useEffect(() => {
     if (chartRef.current) {
@@ -94,7 +94,7 @@ export default function LineChart(props: Props) {
 
       window.onresize = () => {
         chart.resize();
-      }
+      };
     }
   }, []);
 

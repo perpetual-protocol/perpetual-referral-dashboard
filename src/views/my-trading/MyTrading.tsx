@@ -10,12 +10,14 @@ import Button from '../../components/Button';
 import Wallet from '../../assets/subtract.svg';
 import { sum } from 'lodash';
 import RewardsTiers from '../../components/RewardsTiers';
+import useRewards from '../../hooks/useRewards';
 
 type Props = {};
 
 export default function MyTrading(props: Props) {
-  const { volumeData } = useTrading();
+  const { volumeData, weeklyTradingVolume, weeklyTradingFee } = useTrading();
   const { data } = useStaking();
+  const { tier, rebateUSD } = useRewards();
 
   const chartData = {
     values: volumeData.map(v => v.volume),
@@ -24,7 +26,7 @@ export default function MyTrading(props: Props) {
     )
   };
 
-  const weeklyTradingVolume = sum(chartData.values);
+  console.log('fee', weeklyTradingFee);
 
   return (
     <>
@@ -39,7 +41,12 @@ export default function MyTrading(props: Props) {
         title='Weekly Trading Volume'
         format='$0,0.0'
       />
-      <StatCard icon={<PerpLogoGreen />} value={4000} title='Weekly Rewards' />
+      <StatCard
+        icon={<USDCLogo />}
+        value={rebateUSD}
+        title='Weekly Rewards'
+        max={tier?.usd_cap}
+      />
       <div className='col-span-12 mb-8'>
         <h5 className='text-white font-bold text-lg mb-4'>
           Weekly Trading Volume

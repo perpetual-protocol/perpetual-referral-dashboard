@@ -3,7 +3,7 @@ import { PERP_SUBGRAPH } from '../utils/http';
 import dayjs, { Dayjs } from 'dayjs';
 import { formatUnits } from '@ethersproject/units';
 import utc from 'dayjs/plugin/utc';
-import { sumBy } from 'lodash';
+import { sum, sumBy } from 'lodash';
 import { useWeb3React } from '@web3-react/core';
 import { fromUnixTime } from 'date-fns';
 dayjs.extend(utc);
@@ -32,6 +32,7 @@ function getPositionChangedEvents(account: string) {
                 id
                 positionNotional
                 timestamp
+                fee
             }
         }
     `);
@@ -41,7 +42,9 @@ function getPositionChangedEvents(account: string) {
 
 export default function useTrading() {
   const { account, active } = useWeb3React();
-  const days = getDaysOfPastWeek().map(d => fromUnixTime(d.start)).reverse();
+  const days = getDaysOfPastWeek()
+    .map(d => fromUnixTime(d.start))
+    .reverse();
   const { data } = useQuery(
     ['positionChangedEvents', { account }],
     () => getPositionChangedEvents(account),
@@ -59,12 +62,20 @@ export default function useTrading() {
       volume: sumBy(events, (e: any) => {
         return Number(formatUnits(e?.positionNotional, 18));
       }),
+      fee: sumBy(events, (e: any) => {
+        return Number(formatUnits(e?.fee, 18));
+      }),
       timestamp: days[i]
     };
   });
 
+  const weeklyTradingVolume = sum(volumeData.map(v => v.volume));
+  const weeklyTradingFee = sum(volumeData.map(v => v.fee));
+
   return {
     volumeData,
-    days
+    days,
+    weeklyTradingVolume,
+    weeklyTradingFee
   };
 }

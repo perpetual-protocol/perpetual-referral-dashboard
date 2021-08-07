@@ -4,63 +4,54 @@ import Modal from '../../components/Modal';
 import Input from '../../components/Input';
 import Button from '../../components/Button';
 import Copy from '../../assets/copy.svg';
-import useReferral, { callReferrerContract } from '../../hooks/useReferral';
-import useStaking from '../../hooks/useStaking';
-import { useState } from 'react';
-import { useWeb3React } from '@web3-react/core';
-import { useMutation } from 'react-query';
+import useReferral from '../../hooks/useReferral';
 import StatCard from '../../components/StatCard';
 import PerpLogoGreen from '../../assets/logo-green.svg';
-import { useEffect } from 'react';
 import { useToast } from '../../App';
 import { CopyToClipboard } from 'react-copy-to-clipboard';
 import LineChart from '../../components/LineChart';
 import Wallet from '../../assets/subtract.svg';
 import RewardsTiers from '../../components/RewardsTiers';
+import useRewards from '../../hooks/useRewards';
+import dayjs from 'dayjs';
 
-type Props = {};
+type Props = {
+  setActiveTab: Function;
+};
 
 export default function MyReferral(props: Props) {
-  const { referralCode, totalReferees } = useReferral();
-  const { data } = useStaking();
+  const {
+    referralCode,
+    totalReferees,
+    referees,
+    referralCodeDayData,
+    weeklyRefereeVolumes,
+    currentWeeklyReferralVolume,
+    weeklyReferralVolumeChange
+  } = useReferral();
   const { showToast } = useToast();
+  const { referrerRewards, isLoading: isLoadingRewards } = useRewards(referees);
+  const chartData = {
+    values: referralCodeDayData.map(v => v.newUsers),
+    axis: referralCodeDayData.map(
+      v =>
+        `${dayjs(v.timestamp.start).utc().format('DD/MM/YY')} - \n${dayjs(
+          v.timestamp.end
+        )
+          .utc()
+          .format('DD/MM/YY')}`
+    )
+  };
 
-  // const { mutateAsync: setReferralCode } = useMutation(() =>
-  //   callReferrerContract(library.getSigner(), 'setReferralCode', [refereeCode])
-  // );
-
-  // const onRefereeCodeChange = (e: ChangeEvent) => {
-  //   setRefereeCode((e.target as any).value);
-  // };
-
-  // const addReferralCode = async () => {
-  //   if (referralCodeExists) {
-  //     setReferralCode();
-  //   }
-  // };
+  const weeklyReferralChartData = {
+    values: weeklyRefereeVolumes.map(v => v.volume),
+    axis: weeklyRefereeVolumes.map(v => v.week)
+  };
 
   return (
     <>
       {referralCode && (
         <>
-          {/* {!isReferee && (
-        <Modal>
-          <h1 className='text-white font-semibold text-lg text-center mb-5'>
-            Please enter a referral code to start trading.
-          </h1>
-          <Input onChange={onRefereeCodeChange} placeholder='Referral Code' />
-          {!referralCodeExists && (
-            <span className='text-perp-red text-sm'>
-              This referral code does not exist.
-            </span>
-          )}
-          <div className='mt-4'>
-            <Button isFullWidth onClick={addReferralCode}>
-              Submit
-            </Button>
-          </div>
-        </Modal>
-      )} */}
           <div className='flex justify-between col-span-12 p-6 border-opacity-10 border rounded-xl'>
             <span className='text-lg text-white font-bold'>
               My Code: {referralCode}
@@ -86,13 +77,16 @@ export default function MyReferral(props: Props) {
           />
           <StatCard
             icon={<PerpLogoGreen />}
-            value={4000}
+            value={currentWeeklyReferralVolume}
             title='Weekly Trading Volume'
+            change={weeklyReferralVolumeChange}
           />
           <StatCard
             icon={<PerpLogoGreen />}
-            value={4000}
+            value={referrerRewards?.rebateUSD}
+            max={referrerRewards?.tier?.usd_cap}
             title='Weekly Rewards'
+            isLoading={isLoadingRewards}
           />
           <div className='col-span-12 mb-8 mt-8'>
             <h5 className='text-white font-bold text-lg mb-4'>
@@ -102,21 +96,24 @@ export default function MyReferral(props: Props) {
               className='bg-perp-gray-300 rounded-2xl p-4'
               style={{ height: '350px' }}
             >
-              <LineChart />
+              <LineChart
+                name='Weekly Referee Trading Volume'
+                data={weeklyReferralChartData}
+              />
             </div>
           </div>
           <div className='col-span-12 mb-8'>
             <h5 className='text-white font-bold text-lg mb-4'>
-              Weekly Trading Volume
+              Weekly New Users
             </h5>
             <div
               className='bg-perp-gray-300 rounded-2xl p-4'
               style={{ height: '350px' }}
             >
-              <LineChart />
+              <LineChart name='Weekly New Users' data={chartData} />
             </div>
           </div>
-          <div className='col-span-6'>
+          <div className='col-span-12 sm:col-span-6'>
             <h5 className='text-white text-lg mb-4'>Rewards Tiers</h5>
             <p className='text-perp-gray-50 mb-4'>
               Explainer text to go Lorem ipsum dolor sit amet, consectetur
@@ -128,26 +125,28 @@ export default function MyReferral(props: Props) {
               occaecat cupidatat non proident, sunt in culpa qui officia
               deserunt mollit anim id est laborum."
             </p>
-            <Button onClick={() => false} icon={<Wallet />}>
-              Staked Perp
-            </Button>
+            <a href='https://staking.perp.exchange' target='_blank'>
+              <Button onClick={() => false} icon={<Wallet />}>
+                Staked Perp
+              </Button>
+            </a>
           </div>
           <div
-            className='col-span-6 border border-opacity-10 rounded-lg p-4 pb-0 pt-3'
+            className='col-span-12 sm:col-span-6 border border-opacity-10 rounded-lg p-4 pb-0 pt-3'
             style={{ height: 'fit-content' }}
           >
             <RewardsTiers />
           </div>
         </>
       )}
-      {
-        !referralCode &&
+      {!referralCode && (
         <div className='col-span-12'>
-            <p className='text-center bg-perp-red p-4 rounded-lg'>
-                Looks like you don't have a referral code yet. Contact the Perpetual team to arrange one.
-            </p>
+          <p className='text-center bg-perp-red p-4 rounded-lg'>
+            Looks like you don't have a referral code yet. Contact the Perpetual
+            team to arrange one.
+          </p>
         </div>
-      }
+      )}
     </>
   );
 }

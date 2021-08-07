@@ -1,6 +1,7 @@
 import { format, fromUnixTime } from 'date-fns';
-import React from 'react';
+import React, { ChangeEvent } from 'react';
 import LineChart from '../../components/LineChart';
+import Modal from '../../components/Modal';
 import StatCard from '../../components/StatCard';
 import useTrading from '../../hooks/useTrading';
 import PerpLogoGreen from '../../assets/logo-green.svg';
@@ -8,55 +9,131 @@ import USDCLogo from '../../assets/usdc-logo.svg';
 import useStaking from '../../hooks/useStaking';
 import Button from '../../components/Button';
 import Wallet from '../../assets/subtract.svg';
-import { sum } from 'lodash';
 import RewardsTiers from '../../components/RewardsTiers';
 import useRewards from '../../hooks/useRewards';
+import Input from '../../components/Input';
+import { useMutation } from 'react-query';
+import { callReferrerContract } from '../../hooks/useReferral';
+import { useWeb3React } from '@web3-react/core';
+import { useReferee } from '../../hooks/useReferee';
+import { useState } from 'react';
+import Skeleton from '../../components/Skeleton';
+import dayjs from 'dayjs';
+import { useEffect } from 'react';
 
-type Props = {};
+type Props = {
+  setActiveTab: Function;
+};
 
 export default function MyTrading(props: Props) {
-  const { volumeData, weeklyTradingVolume, weeklyTradingFee } = useTrading();
-  const { data } = useStaking();
-  const { tier, rebateUSD } = useRewards();
+  const [refereeCode, setRefereeCode] = useState('');
+  const [isModalVisible, setIsModalVisible] = useState(false);
+
+  const {
+    volumeData,
+    weeklyTradingVolume,
+    isLoading: isLoadingTradeData
+  } = useTrading();
+  const { referralCodeExists, isReferee, retryRefereeRequest } =
+    useReferee(refereeCode);
+  const { library } = useWeb3React();
+  const { data, isLoading: isLoadingStakingData } = useStaking();
+  const {
+    refereeRewards: { tier, rebateUSD }
+  } = useRewards();
+
+  const isLoadingData = isLoadingTradeData || isLoadingStakingData;
 
   const chartData = {
     values: volumeData.map(v => v.volume),
-    axis: volumeData.map(v =>
-      format(fromUnixTime(Number(v.timestamp || 0)), 'E')
+    axis: volumeData.map(
+      v =>
+        `${dayjs(v.timestamp.start).utc().format('DD/MM/YY')} - \n${dayjs(
+          v.timestamp.end
+        )
+          .utc()
+          .format('DD/MM/YY')}`
     )
   };
 
-  console.log('fee', weeklyTradingFee);
+  const { mutateAsync: setReferralCode } = useMutation(() =>
+    callReferrerContract(library.getSigner(), 'setReferralCode', [refereeCode])
+  );
+
+  const onRefereeCodeChange = (e: ChangeEvent) => {
+    setRefereeCode((e.target as any).value);
+  };
+
+  const addReferralCode = async () => {
+    if (referralCodeExists) {
+      await setReferralCode();
+      retryRefereeRequest();
+    }
+  };
 
   return (
     <>
+      {!isReferee && (
+        <Modal>
+          <h1 className='text-white font-semibold text-lg text-center mb-5'>
+            Please enter a referral code to start trading.
+          </h1>
+          <Input onChange={onRefereeCodeChange} placeholder='Referral Code' />
+          {!referralCodeExists && (
+            <span className='text-perp-red text-sm'>
+              This referral code does not exist.
+            </span>
+          )}
+          <div className='mt-4'>
+            <Button isFullWidth onClick={addReferralCode}>
+              Submit
+            </Button>
+            <Button
+              onClick={() => props.setActiveTab('my-referrals')}
+              className='mt-2'
+              isFullWidth
+              type='secondary'
+            >
+              I am a referrer
+            </Button>
+          </div>
+        </Modal>
+      )}
       <StatCard
         icon={<PerpLogoGreen />}
         value={Number(data)}
         title='Staked Perp'
+        isLoading={isLoadingData}
       />
       <StatCard
         icon={<USDCLogo />}
         value={weeklyTradingVolume}
         title='Weekly Trading Volume'
         format='$0,0.0'
+        isLoading={isLoadingData}
       />
       <StatCard
         icon={<USDCLogo />}
         value={rebateUSD}
         title='Weekly Rewards'
         max={tier?.usd_cap}
+        isLoading={isLoadingData}
       />
       <div className='col-span-12 mb-8'>
         <h5 className='text-white font-bold text-lg mb-4'>
           Weekly Trading Volume
         </h5>
-        <div
-          className='bg-perp-gray-300 rounded-2xl p-4'
-          style={{ height: '350px' }}
-        >
-          <LineChart data={chartData} />
-        </div>
+        {isLoadingData && (
+          <Skeleton height={350} className='bg-perp-gray-300 rounded-2xl p-4' />
+        )}
+        {!isLoadingData && (
+          <div
+            className='bg-perp-gray-300 rounded-2xl p-4'
+            style={{ height: '350px' }}
+          >
+            <LineChart name='Weekly Trading Volume' data={chartData} />
+          </div>
+        )}
       </div>
       <div className='col-span-12 sm:col-span-6'>
         <h5 className='text-white text-lg mb-4'>Rewards Tiers</h5>
@@ -69,9 +146,11 @@ export default function MyTrading(props: Props) {
           fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident,
           sunt in culpa qui officia deserunt mollit anim id est laborum."
         </p>
-        <Button onClick={() => false} icon={<Wallet />}>
-          Staked Perp
-        </Button>
+        <a href='https://staking.perp.exchange' target='_blank'>
+          <Button onClick={() => false} icon={<Wallet />}>
+            Staked Perp
+          </Button>
+        </a>
       </div>
       <div
         className='col-span-12 sm:col-span-6 border border-opacity-10 rounded-lg p-4 pb-0 pt-3'

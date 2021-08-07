@@ -12,11 +12,12 @@ type ChartData = {
 
 type Props = {
   data: ChartData;
+  name: string;
 };
 
 const tailwind = useTailwind();
 
-function getOption(data: ChartData) {
+function getOption(name: string, data: ChartData) {
   return {
     xAxis: {
       type: 'category',
@@ -65,7 +66,7 @@ function getOption(data: ChartData) {
     color: [tailwind.theme.colors['perp-cyan']],
     series: [
       {
-        name: 'Weekly Trading Volume',
+        name,
         type: 'bar',
         barWidth: '60%',
         data: data?.values || []
@@ -75,21 +76,21 @@ function getOption(data: ChartData) {
 }
 
 export default function LineChart(props: Props) {
-  const { data = { values: [], axis: [] } } = props;
+  const { data = { values: [], axis: [] }, name } = props;
   const [chartInstance, setChartInstance] = useState<echarts.ECharts>();
   const chartRef = useRef();
 
   useEffect(() => {
     if (chartInstance) {
       const chart = echarts.init(chartRef.current);
-      chart.setOption(getOption(data));
+      chart.setOption(getOption(name, data));
     }
   }, [data?.axis, data?.values]);
 
   useEffect(() => {
     if (chartRef.current) {
       const chart = echarts.init(chartRef.current);
-      chart.setOption(getOption(data));
+      chart.setOption(getOption(name, data));
       setChartInstance(chart);
 
       window.onresize = () => {

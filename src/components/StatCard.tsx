@@ -1,5 +1,6 @@
 import React, { ReactElement } from 'react';
 import numeral from 'numeral';
+import Skeleton from './Skeleton';
 
 type Props = {
   title: string;
@@ -8,10 +9,22 @@ type Props = {
   value: number;
   format?: string;
   max?: number;
+  isLoading?: boolean;
 };
 
 export default function StatCard(props: Props) {
-  const { title, icon, change, value, format, max } = props;
+  const { title, icon, change, value, format, max, isLoading } = props;
+  if (isLoading) {
+    return (
+      <Skeleton
+        height={160}
+        className='rounded-2xl bg-perp-gray-300 py-5 px-6 col-span-12 sm:col-span-6 md:col-span-4'
+      />
+    );
+  }
+
+  const changeColor = change > 0 ? 'text-perp-light-green' : 'text-perp-red';
+
   return (
     <div className='rounded-2xl bg-perp-gray-300 py-5 px-6 col-span-12 sm:col-span-6 md:col-span-4'>
       <h6 className='text-perp-gray-50 text-sm mb-4'>{title}</h6>
@@ -21,9 +34,9 @@ export default function StatCard(props: Props) {
           {numeral(value).format(format || '0,0')}
         </h2>
         {max && <span className='text-perp-gray-50 text-sm'>/ {max} MAX</span>}
-        {change > 0 && (
-          <span className='text-perp-light-green'>
-            {numeral(change).format('+0.0')}
+        {change !== undefined && (
+          <span className={`${changeColor}`}>
+            {numeral(change).format('+0.0%')}
           </span>
         )}
       </div>

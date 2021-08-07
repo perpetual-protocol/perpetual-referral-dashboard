@@ -44,8 +44,12 @@ export default function Home(props: unknown) {
           className='grid grid-cols-12 mt-8 w-full gap-6 mb-20 px-4'
           style={{ maxWidth: '1200px' }}
         >
-          {activeTab === 'my-referrals' && <MyReferral />}
-          {activeTab === 'my-trading' && <MyTrading />}
+          {activeTab === 'my-referrals' && (
+            <MyReferral setActiveTab={setActiveTab} />
+          )}
+          {activeTab === 'my-trading' && (
+            <MyTrading setActiveTab={setActiveTab} />
+          )}
         </div>
       )}
     </div>

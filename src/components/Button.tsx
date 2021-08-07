@@ -1,7 +1,7 @@
 import React, { ReactElement } from 'react';
 
 type Size = 'sm' | 'md' | 'lg';
-type ButtonType = 'primary' | 'secondary';
+type ButtonType = 'primary' | 'secondary' | 'destructive';
 
 type Props = {
   children: string | string[];
@@ -10,6 +10,7 @@ type Props = {
   onClick: Function;
   type?: ButtonType;
   isFullWidth?: boolean;
+  className?: string;
 };
 
 export default function Button(props: Props) {
@@ -19,7 +20,8 @@ export default function Button(props: Props) {
     size = 'md',
     onClick,
     type = 'primary',
-    isFullWidth = false
+    isFullWidth = false,
+    className = ''
   } = props;
 
   const getSizeClass = (size: Size) => {
@@ -39,6 +41,8 @@ export default function Button(props: Props) {
         return 'bg-perp-cyan text-perp-gray-300';
       case 'secondary':
         return 'bg-perp-gray-200 text-white';
+      case 'destructive':
+        return 'bg-perp-red text-perp-gray-300';
     }
   };
 
@@ -49,7 +53,7 @@ export default function Button(props: Props) {
       onClick={onClick}
       className={`${getSizeClass(size)} ${getTypeClass(
         type
-      )} font-semibold rounded-full flex items-center hover:bg-perp-cyan-secondary justify-center ${widthClass}`}
+      )} font-semibold rounded-full flex items-center hover:bg-perp-cyan-secondary justify-center ${widthClass} ${className}`}
     >
       {icon && <div className='mr-2 flex items-center'>{icon}</div>}
       {children}

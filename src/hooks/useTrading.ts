@@ -8,7 +8,7 @@ import { useWeb3React } from '@web3-react/core';
 import { fromUnixTime } from 'date-fns';
 dayjs.extend(utc);
 
-function getDaysOfPastWeek() {
+export function getLast7Days() {
   const days = [];
   for (let i = 0; i < 7; i++) {
     days.push(dayjs().subtract(i, 'day'));
@@ -23,8 +23,26 @@ function getDaysOfPastWeek() {
     .reverse();
 }
 
-function getPositionChangedEvents(account: string) {
-  const timestamps = getDaysOfPastWeek();
+export function getLastNWeeks(window = 7) {
+  const weeks = [];
+  for (let i = 0; i < window; i++) {
+    weeks.push(dayjs().utc().subtract(i, 'weeks').startOf('week'));
+  }
+  return weeks
+    .map((week: Dayjs) => {
+      return {
+        start: Math.round(week.utc().startOf('week').valueOf() / 1000),
+        end: Math.round(week.utc().endOf('week').startOf('day').valueOf() / 1000)
+      };
+    })
+    .reverse();
+}
+
+export function getPositionChangedEvents(
+  account: string,
+  customWeeks: { start: number; end: number }[]
+) {
+  const timestamps = customWeeks || getLastNWeeks(7);
   const promises = timestamps.map(timestamp => {
     return PERP_SUBGRAPH(`
         query {
@@ -40,14 +58,22 @@ function getPositionChangedEvents(account: string) {
   return Promise.all(promises);
 }
 
-export default function useTrading() {
+export default function useTrading(
+  customTimestamps?: { start: number; end: number }[]
+) {
   const { account, active } = useWeb3React();
-  const days = getDaysOfPastWeek()
-    .map(d => fromUnixTime(d.start))
-    .reverse();
-  const { data } = useQuery(
-    ['positionChangedEvents', { account }],
-    () => getPositionChangedEvents(account),
+  const days = getLastNWeeks().map(d => ({
+    start: dayjs(d.start * 1000)
+      .utc()
+      .toDate(),
+    end: dayjs(d.end * 1000)
+      .utc()
+      .toDate()
+  }));
+
+  const { data, isLoading } = useQuery(
+    ['positionChangedEvents', { account, customTimestamps }],
+    () => getPositionChangedEvents(account, customTimestamps),
     {
       enabled: active
     }
@@ -76,6 +102,7 @@ export default function useTrading() {
     volumeData,
     days,
     weeklyTradingVolume,
-    weeklyTradingFee
+    weeklyTradingFee,
+    isLoading
   };
 }

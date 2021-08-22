@@ -4,6 +4,7 @@ import { useRef } from 'react';
 import * as echarts from 'echarts/core';
 import useTailwind from '../hooks/useTailwind';
 import { useState } from 'react';
+import numeral from 'numeral';
 
 type ChartData = {
   values: number[];
@@ -61,6 +62,9 @@ function getOption(name: string, data: ChartData) {
         label: {
           show: false
         }
+      },
+      formatter: (params) => {
+        return `${params[0].marker} $${numeral(params[0].value).format('0,0.00')}`
       }
     },
     color: [tailwind.theme.colors['perp-cyan']],
@@ -82,13 +86,12 @@ export default function LineChart(props: Props) {
 
   useEffect(() => {
     if (chartInstance) {
-      const chart = echarts.init(chartRef.current);
-      chart.setOption(getOption(name, data));
+      chartInstance.setOption(getOption(name, data));
     }
   }, [data?.axis, data?.values]);
 
   useEffect(() => {
-    if (chartRef.current) {
+    if (chartRef.current && !chartInstance) {
       const chart = echarts.init(chartRef.current);
       chart.setOption(getOption(name, data));
       setChartInstance(chart);

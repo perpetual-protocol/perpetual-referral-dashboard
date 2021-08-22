@@ -16,7 +16,7 @@ module.exports = {
         'perp-input-bg': 'rgba(255, 255, 255, 0.06)'
       },
       fontFamily: {
-        'body': ['SF Pro Text']
+        'body': ['Open Sans']
       }
     },
   },

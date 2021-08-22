@@ -12,7 +12,7 @@ const getStakedPerp = async (account: string) => {
   const provider = new JsonRpcProvider('https://main-light.eth.linkpool.io/');
   const contract = new Contract(CONTRACT_ADDRESS, StakingContractABI, provider);
   const response = (await contract.balanceOf(
-    '0xE2caCB675e8B45730a2e4C53C02FCEcFaEFea37C'
+    account.toString()
   )) as BigNumber;
   return formatUnits(response.toString(), 18);
 };

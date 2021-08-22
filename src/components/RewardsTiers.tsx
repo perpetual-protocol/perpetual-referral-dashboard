@@ -1,6 +1,10 @@
 import React from 'react';
+import numeral from 'numeral';
+import { refereeTiers, referrerTiers } from '../hooks/useRewards';
 
-type Props = {};
+type Props = {
+  type: 'referee' | 'referrer';
+};
 
 const tiers = [
   {
@@ -30,7 +34,8 @@ const tiers = [
   }
 ];
 
-export default function RewardsTiers(props: Props) {
+export default function RewardsTiers({ type }: Props) {
+  const tiers = type === 'referee' ?  refereeTiers : referrerTiers;
   return (
     <table className='text-white table-fixed w-full'>
       <thead className='uppercase font-medium text-xs text-perp-gray-50'>
@@ -41,11 +46,11 @@ export default function RewardsTiers(props: Props) {
         </tr>
       </thead>
       <tbody>
-        {tiers.map(tier => (
-          <tr key={`tier-${tier.tier}`} className='border-t border-white border-opacity-10 font-normal'>
-            <td className='w-1 py-4 text-left'>Tier {tier.tier}</td>
-            <td className='w-1 py-4 text-right'>{tier.sperp_requirement}</td>
-            <td className='w-1 py-4 text-right'>{tier.usd_cap}</td>
+        {Object.keys(tiers).map(tier => (
+          <tr key={`tier-${tier}`} className='border-t border-white border-opacity-10 font-normal'>
+            <td className='w-1 py-4 text-left'>Tier {tiers[tier].tier}</td>
+            <td className='w-1 py-4 text-right'>{numeral(tiers[tier].staked).format('0,0')}</td>
+            <td className='w-1 py-4 text-right'>{numeral(tiers[tier].usd_cap).format('0,0')}</td>
           </tr>
         ))}
       </tbody>

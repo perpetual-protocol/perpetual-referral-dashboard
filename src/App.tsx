@@ -1,28 +1,30 @@
-import React from 'react';
-import { Web3ReactProvider } from '@web3-react/core';
-import { QueryClient, QueryClientProvider } from 'react-query';
-import Home from './views/home/Home';
-import AppNav from './views/app-nav/AppNav';
-import { Web3Provider } from '@ethersproject/providers';
-import { useState } from 'react';
-import Toast from './components/Toast';
-import { useContext } from 'react';
-import * as echarts from 'echarts/core';
+import React from "react";
+import { Web3ReactProvider } from "@web3-react/core";
+import { QueryClient, QueryClientProvider } from "react-query";
+import Home from "./views/home/Home";
+import AppNav from "./views/app-nav/AppNav";
+import { Web3Provider } from "@ethersproject/providers";
+import { useState } from "react";
+import Toast from "./components/Toast";
+import { useContext } from "react";
+import * as echarts from "echarts/core";
 
-import { LineChart, BarChart } from 'echarts/charts';
+import { LineChart, BarChart } from "echarts/charts";
 import {
   TitleComponent,
   TooltipComponent,
-  GridComponent
-} from 'echarts/components';
-import { CanvasRenderer } from 'echarts/renderers';
+  GridComponent,
+} from "echarts/components";
+import { CanvasRenderer } from "echarts/renderers";
+import { Route } from "wouter";
+import Report from "./views/report/Report";
 echarts.use([
   LineChart,
   TitleComponent,
   TooltipComponent,
   GridComponent,
   CanvasRenderer,
-  BarChart
+  BarChart,
 ]);
 
 const queryClient = new QueryClient();
@@ -36,13 +38,13 @@ function getLibrary(provider) {
 
 export default function App() {
   const [isToastVisible, setIsToastVisible] = useState(false);
-  const [toastText, setToastText] = useState('');
+  const [toastText, setToastText] = useState("");
   const showToast = (text: string) => {
     setIsToastVisible(true);
     setToastText(text);
     setTimeout(() => {
       setIsToastVisible(false);
-      setToastText('');
+      setToastText("");
     }, 4000);
   };
 
@@ -50,9 +52,9 @@ export default function App() {
     <ToastContext.Provider value={{ showToast }}>
       <QueryClientProvider client={queryClient}>
         <Web3ReactProvider getLibrary={getLibrary}>
-          <div className='flex flex-col w-full h-full font-body subpixel-antialiased'>
-            <AppNav />
-            <Home />
+          <div className="flex flex-col w-full h-full font-body subpixel-antialiased">
+            <Route path="/" component={Home} />
+            <Route path="/report" component={Report} />
           </div>
         </Web3ReactProvider>
       </QueryClientProvider>

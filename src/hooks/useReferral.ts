@@ -1,16 +1,16 @@
-import { useWeb3React } from '@web3-react/core';
-import { useQuery } from 'react-query';
-import { PERP_SUBGRAPH, SUBGRAPH } from '../utils/http';
-import PerpetualProtocolABI from '../contracts/PerpetualProtocolReferrer.json';
-import { BaseProvider } from '@ethersproject/providers';
-import { Contract } from '@ethersproject/contracts';
-import { getLastNWeeks } from './useTrading';
-import { useEffect, useState } from 'react';
-import dayjs from 'dayjs';
-import { last, nth, sumBy, zip } from 'lodash';
-import { formatUnits } from '@ethersproject/units';
+import { useWeb3React } from "@web3-react/core";
+import { useQuery } from "react-query";
+import { SUBGRAPH } from "../utils/http";
+import PerpetualProtocolABI from "../contracts/PerpetualProtocolReferrer.json";
+import { BaseProvider } from "@ethersproject/providers";
+import { Contract } from "@ethersproject/contracts";
+import { getLastNWeeks } from "./useTrading";
+import { useEffect, useState } from "react";
+import dayjs from "dayjs";
+import { last, nth, sumBy, zip } from "lodash";
+import { formatUnits } from "@ethersproject/units";
 
-const CONTRACT_ADDRESS = '0x19c65D0A09975D703A16e226BE39E3A2787C4d47';
+const CONTRACT_ADDRESS = "0xF1d5BA04a25A6D88c468af932BFe2B1e78db7B45";
 
 export async function callReferrerContract(
   provider: BaseProvider,
@@ -31,25 +31,17 @@ export async function callReferrerContract(
 }
 
 export async function calculateRefereesWeeklyVolume(
-  referees: string[] = [],
+  referralCode: string,
   weeks: number = 7
 ) {
   const _weeks = getLastNWeeks(weeks);
-  const _referees = [
-    '0xa73018C8c64D8b58f692da632255C8ac907C8d58'.toLowerCase()
-  ];
   const refereesDayData = await Promise.all(
-    _weeks.map(week => {
-      return PERP_SUBGRAPH(`
+    _weeks.map((week) => {
+      return SUBGRAPH(`
       query {
-        traderDayDatas(where: { date_gte: ${week.start}, date_lte: ${
-        week.end
-      }, trader_in: [${_referees.map(r => `"${r}"`).join(',')}] }) {
-          trader {
-            id
-          }
+        referralCodeDayDatas(where: { date_gte: ${week.start}, date_lte: ${week.end}, referralCode: "${referralCode}"} ) {
           tradingVolume
-          fee
+          fees
           date
         }
       }
@@ -57,30 +49,32 @@ export async function calculateRefereesWeeklyVolume(
     })
   );
 
-  console.log('days', refereesDayData);
-
   const dateLabels = _weeks.map(
-    w =>
-      `${dayjs(w.start * 1000).utc().format('DD/MM/YY')} - \n${dayjs(w.end * 1000)
+    (w) =>
+      `${dayjs(w.start * 1000)
         .utc()
-        .format('DD/MM/YY')}`
+        .format("DD/MM/YY")} - \n${dayjs(w.end * 1000)
+        .utc()
+        .format("DD/MM/YY")}`
   );
 
-  const volumes = (refereesDayData || []).map(day =>
-    sumBy(day.data.traderDayDatas, (dayData: any) => Number(formatUnits(dayData.tradingVolume, 18)))
+  const volumes = (refereesDayData || []).map((day) =>
+    sumBy(day.data.referralCodeDayDatas, (dayData: any) =>
+      Number(formatUnits(dayData.tradingVolume, 18))
+    )
   );
 
-  const fees = (refereesDayData || []).map(day =>
-    sumBy(day.data.traderDayDatas, (dayData: any) =>
-      Number(formatUnits(dayData.fee, 18))
+  const fees = (refereesDayData || []).map((day) =>
+    sumBy(day.data.referralCodeDayDatas, (dayData: any) =>
+      Number(formatUnits(dayData.fees, 18))
     )
   );
 
   return volumes.map((volume, i) => ({
     volume: volume.toString(),
     week: dateLabels[i],
-    fees: fees[i].toString()
-  }))
+    fees: fees[i].toString(),
+  }));
 }
 
 async function getWeeklyNewReferees(
@@ -88,7 +82,7 @@ async function getWeeklyNewReferees(
   customWeeks: number = 7
 ) {
   const timestamps = getLastNWeeks(customWeeks);
-  const promises = timestamps.map(timestamp => {
+  const promises = timestamps.map((timestamp) => {
     return SUBGRAPH(`
         query {
             referralCodeDayDatas(where: { referralCode: "${referralCode}", date_gte: ${timestamp.start}, date_lte: ${timestamp.end} }, orderDirection: desc, orderBy: date) {
@@ -101,23 +95,30 @@ async function getWeeklyNewReferees(
   return Promise.all(promises);
 }
 
+function getVolumeChange(current: number, last: number) {
+  const change = (current - last) / last;
+  if (last === 0 && current > 0) return 1;
+  return change;
+}
+
 export default function useReferral() {
   const { active, account } = useWeb3React();
   const [_referees, _setReferees] = useState([]);
-  const [_referralCode, _setReferralCode] = useState('');
-  const days = getLastNWeeks().map(d => ({
+  const [_referralCode, _setReferralCode] = useState("");
+  const days = getLastNWeeks().map((d) => ({
     start: dayjs(d.start * 1000)
       .utc()
       .toDate(),
     end: dayjs(d.end * 1000)
       .utc()
-      .toDate()
+      .toDate(),
   }));
 
-  const { data: referrerResponse } = useQuery(
-    ['refereeCode', { account }],
-    () =>
-      SUBGRAPH(`
+  const { data: referrerResponse, isLoading: isLoadingReferralCodeData } =
+    useQuery(
+      ["referrerCode", { account }],
+      () =>
+        SUBGRAPH(`
         query {
             trader(id: "${account.toLowerCase()}") {
             id
@@ -128,44 +129,55 @@ export default function useReferral() {
           }
         }
     `),
-    {
-      enabled: active,
-      onSuccess: response => {
-        _setReferees(response?.data?.trader?.referrerCode?.referees);
-        _setReferralCode(response?.data?.trader?.referrerCode?.id);
+      {
+        enabled: active,
+        onSuccess: (response) => {
+          _setReferees(response?.data?.trader?.referrerCode?.referees);
+          _setReferralCode(response?.data?.trader?.referrerCode?.id);
+        },
       }
-    }
+    );
+
+  const { data: weeklyReferralCodeVolume, isLoading: isLoadingWeeklyVolume } =
+    useQuery(
+      ["refereesVolume", { _referees }],
+      () => calculateRefereesWeeklyVolume(_referralCode),
+      {
+        enabled: _referralCode !== "",
+      }
+    );
+
+  const { data: referralCodeDayDatasResponses, isLoading: isLoadingDayDatas } =
+    useQuery(
+      ["referralCodeDayDatas", { _referralCode }],
+      () => getWeeklyNewReferees(_referralCode),
+      {
+        enabled: _referralCode !== "",
+      }
+    );
+
+  const currentWeeklyReferralVolume = Number(
+    last(weeklyReferralCodeVolume)?.volume
+  );
+  const lastWeekReferralVolume = Number(
+    nth(weeklyReferralCodeVolume, -2)?.volume
   );
 
-  const { data: weeklyRefereeVolumes } = useQuery(
-    ['refereesVolume', { _referees }],
-    () => calculateRefereesWeeklyVolume(_referees),
-    {
-      enabled: _referees && _referees.length > 0
-    }
+  const weeklyReferralVolumeChange = getVolumeChange(
+    currentWeeklyReferralVolume,
+    lastWeekReferralVolume
   );
-
-  const { data: referralCodeDayDatasResponses } = useQuery(
-    ['referralCodeDayDatas', { _referralCode }],
-    () => getWeeklyNewReferees(_referralCode),
-    {
-      enabled: _referralCode !== ''
-    }
-  );
-
-  const currentWeeklyReferralVolume = Number(last(weeklyRefereeVolumes)?.volume);
-  const lastWeekReferralVolume = Number(nth(weeklyRefereeVolumes, -2)?.volume);
-  const weeklyReferralVolumeChange = (currentWeeklyReferralVolume - lastWeekReferralVolume) / lastWeekReferralVolume;
 
   const referralCodeDayDatas =
-    referralCodeDayDatasResponses?.map(r => r.data?.referralCodeDayDatas) || [];
+    referralCodeDayDatasResponses?.map((r) => r.data?.referralCodeDayDatas) ||
+    [];
 
   const formattedDayData = referralCodeDayDatas.map((dayDatas, i) => {
     return {
       newUsers: sumBy(dayDatas, (day: any) => {
         return Number((day?.newReferees || []).length);
       }),
-      timestamp: days[i]
+      timestamp: days[i],
     };
   });
 
@@ -179,8 +191,11 @@ export default function useReferral() {
     totalReferees,
     referees,
     referralCodeDayData: formattedDayData,
-    weeklyRefereeVolumes: weeklyRefereeVolumes || [],
+    weeklyRefereeVolumes: weeklyReferralCodeVolume || [],
     currentWeeklyReferralVolume,
-    weeklyReferralVolumeChange
+    weeklyReferralVolumeChange,
+    isLoadingDayDatas,
+    isLoadingReferralCodeData,
+    isLoadingWeeklyVolume,
   };
 }

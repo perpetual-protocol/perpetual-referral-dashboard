@@ -27,7 +27,10 @@ export default function MyReferral(props: Props) {
     referralCodeDayData,
     weeklyRefereeVolumes,
     currentWeeklyReferralVolume,
-    weeklyReferralVolumeChange
+    weeklyReferralVolumeChange,
+    isLoadingDayDatas,
+    isLoadingReferralCodeData,
+    isLoadingWeeklyVolume
   } = useReferral();
   const { showToast } = useToast();
   const { referrerRewards, isLoading: isLoadingRewards } = useRewards(referees);
@@ -44,9 +47,11 @@ export default function MyReferral(props: Props) {
   };
 
   const weeklyReferralChartData = {
-    values: weeklyRefereeVolumes.map(v => v.volume),
+    values: weeklyRefereeVolumes.map(v => Number(v.volume)),
     axis: weeklyRefereeVolumes.map(v => v.week)
   };
+
+  const isLoading = isLoadingDayDatas || isLoadingReferralCodeData || isLoadingWeeklyVolume;
 
   return (
     <>
@@ -74,19 +79,21 @@ export default function MyReferral(props: Props) {
             icon={<PerpLogoGreen />}
             value={totalReferees}
             title='Total Traders Referred'
+            isLoading={isLoading}
           />
           <StatCard
             icon={<PerpLogoGreen />}
             value={currentWeeklyReferralVolume}
             title='Weekly Trading Volume'
             change={weeklyReferralVolumeChange}
+            isLoading={isLoading}
           />
           <StatCard
             icon={<PerpLogoGreen />}
             value={referrerRewards?.rebateUSD}
             max={referrerRewards?.tier?.usd_cap}
             title='Weekly Rewards'
-            isLoading={isLoadingRewards}
+            isLoading={isLoadingRewards || isLoading}
           />
           <div className='col-span-12 mb-8 mt-8'>
             <h5 className='text-white font-bold text-lg mb-4'>
@@ -116,14 +123,7 @@ export default function MyReferral(props: Props) {
           <div className='col-span-12 sm:col-span-6'>
             <h5 className='text-white text-lg mb-4'>Rewards Tiers</h5>
             <p className='text-perp-gray-50 mb-4'>
-              Explainer text to go Lorem ipsum dolor sit amet, consectetur
-              adipiscing elit, sed do eiusmod tempor incididunt ut labore et
-              dolore magna aliqua. Ut enim ad minim veniam, quis nostrud
-              exercitation ullamco laboris nisi ut aliquip ex ea commodo
-              consequat. Duis aute irure dolor in reprehenderit in voluptate
-              velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint
-              occaecat cupidatat non proident, sunt in culpa qui officia
-              deserunt mollit anim id est laborum."
+              You can increase your weekly caps by staking PERP with the address you use for trading. Please see caps (in USD) for each staking tier on the right. Keep in mind that all rewards are paid in PERP.
             </p>
             <a href='https://staking.perp.exchange' target='_blank'>
               <Button onClick={() => false} icon={<Wallet />}>

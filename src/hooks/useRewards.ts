@@ -8,7 +8,7 @@ import { calculateRefereesWeeklyVolume } from './useReferral';
 import useStaking from './useStaking';
 import useTrading, {
   getLastNWeeks,
-  getPositionChangedEvents
+  getTraderDayData
 } from './useTrading';
 
 export const refereeTiers = {
@@ -39,7 +39,7 @@ export const refereeTiers = {
   }
 };
 
-const referrerTiers = {
+export const referrerTiers = {
   1: {
     staked: 0,
     usd_cap: 300,
@@ -72,70 +72,68 @@ const referrerTiers = {
   }
 };
 
-function getFixedLastWeek() {
-  const startOfLastWeek = dayjs().utc().subtract(1, 'week').startOf('week');
-  const daysOfLastWeek = [];
+function getCurrentWeek() {
+  const startOfWeek = dayjs().utc().startOf('week');
+  const daysOfWeek = [];
   for (let i = 0; i < 7; i++) {
-    daysOfLastWeek.unshift(startOfLastWeek.add(i, 'days'));
+    daysOfWeek.unshift(startOfWeek.add(i, 'days'));
   }
-  return daysOfLastWeek.map(d => ({
+  return daysOfWeek.map(d => ({
     start: Math.round(dayjs(d).utc().startOf('day').valueOf() / 1000),
     end: Math.round(dayjs(d).utc().endOf('day').valueOf() / 1000)
   }));
 }
 
-function calculateRefereeRewards(fees: number, stakedPerp: number) {
+export function calculateRefereeRewards(fees: number, stakedPerp: number) {
   const tier = Object.values(refereeTiers)
     .reverse()
     .find(t => stakedPerp >= t.staked);
   if (tier) {
-    const cappedFee = fees > tier.usd_cap ? tier.usd_cap : fees;
-    const rebateUSD = cappedFee * tier.rebate;
-    return { tier, rebateUSD };
+    const rebate = fees * tier.rebate;
+    const cappedRebate = rebate > tier.usd_cap ? tier.usd_cap : rebate;
+    return { tier, rebateUSD: cappedRebate };
   }
   return { tier, rebateUSD: 0 };
 }
 
 async function getWeeklyRefereeFee(account: string) {
-  const eventsResponse = await getPositionChangedEvents(
+  const dayDataResponse = await getTraderDayData(
     account,
     getLastNWeeks(1)
   );
-  const positionChangedEvents = (eventsResponse || []).map(
-    e => e.data?.positionChangedEvents
+  const dayDatas = (dayDataResponse || []).map(
+    e => e.data?.traderDayDatas
   );
-  const aggregatedFees = positionChangedEvents.map(pce => {
-    return sumBy(pce, (e: any) => Number(formatUnits(e.fee, 18)));
+  const aggregatedFees = dayDatas.map(dayData => {
+    return sumBy(dayData, (d: any) => Number(formatUnits(d.fee, 18)));
   });
 
   const weeklyTotalFees = sum(aggregatedFees);
   return weeklyTotalFees;
 }
 
-export async function calculateReferrerRewards(
+export function calculateReferrerRewards(
   stakedPerp: number,
-  referees: string[] = []
+  feesPaid: number
 ) {
-  const weeklyRefererrerFees = await calculateRefereesWeeklyVolume(referees, 1);
-  const currentWeek = weeklyRefererrerFees[0];
   const tier = Object.values(referrerTiers)
     .reverse()
     .find(t => stakedPerp >= t.staked);
   if (tier) {
-    const cappedFee = Number(currentWeek.fees) > tier.usd_cap ? tier.usd_cap : Number(currentWeek.fees);
-    const rebateUSD = cappedFee * tier.rebate;
-    return { tier, rebateUSD };
+    const rebate = feesPaid * tier.rebate;
+    const cappedRebate = rebate > tier.usd_cap ? tier.usd_cap : rebate;
+    return { tier, rebateUSD: cappedRebate };
   }
   return { tier, rebateUSD: 0 };
 }
 
 export default function useRewards(referees: string[] = []) {
-  const { weeklyTradingFee } = useTrading(getFixedLastWeek());
+  const { weeklyTradingFee } = useTrading(getCurrentWeek());
   const { data: stakedPerp, isLoading: isLoadingStakingData } = useStaking();
 
   const { data: referrerRewards, isLoading } = useQuery(
     ['referrerRebate', { stakedPerp, weeklyTradingFee }],
-    () => calculateReferrerRewards(Number(stakedPerp), referees),
+    () => calculateReferrerRewards(Number(stakedPerp), 0),
     {
       enabled: referees.length > 0 && !isLoadingStakingData
     }

@@ -1,5 +1,5 @@
 import { useQuery } from 'react-query';
-import { PERP_SUBGRAPH } from '../utils/http';
+import { SUBGRAPH } from '../utils/http';
 import dayjs, { Dayjs } from 'dayjs';
 import { formatUnits } from '@ethersproject/units';
 import utc from 'dayjs/plugin/utc';
@@ -28,28 +28,29 @@ export function getLastNWeeks(window = 7) {
   for (let i = 0; i < window; i++) {
     weeks.push(dayjs().utc().subtract(i, 'weeks').startOf('week'));
   }
+
   return weeks
     .map((week: Dayjs) => {
       return {
         start: Math.round(week.utc().startOf('week').valueOf() / 1000),
-        end: Math.round(week.utc().endOf('week').startOf('day').valueOf() / 1000)
+        end: Math.round(week.utc().endOf('week').endOf('day').valueOf() / 1000)
       };
     })
     .reverse();
 }
 
-export function getPositionChangedEvents(
+export function getTraderDayData(
   account: string,
   customWeeks: { start: number; end: number }[]
 ) {
   const timestamps = customWeeks || getLastNWeeks(7);
   const promises = timestamps.map(timestamp => {
-    return PERP_SUBGRAPH(`
+    return SUBGRAPH(`
         query {
-            positionChangedEvents(where: { trader: "${account}", timestamp_gte: ${timestamp.start}, timestamp_lte: ${timestamp.end}}, orderDirection: desc, orderBy: timestamp) {
+            traderDayDatas(where: { trader: "${account.toLowerCase()}", date_gte: ${timestamp.start}, date_lte: ${timestamp.end}}, orderDirection: desc, orderBy: date) {
                 id
-                positionNotional
-                timestamp
+                tradingVolume
+                date
                 fee
             }
         }
@@ -72,21 +73,24 @@ export default function useTrading(
   }));
 
   const { data, isLoading } = useQuery(
-    ['positionChangedEvents', { account, customTimestamps }],
-    () => getPositionChangedEvents(account, customTimestamps),
+    ['traderDayDatas', { account, customTimestamps }],
+    () => getTraderDayData(account, customTimestamps),
     {
       enabled: active
     }
   );
 
-  const positionChangedEvents = (data || []).map(
-    d => d.data?.positionChangedEvents
+  const dayDatas = (data || []).map(
+    d => d.data?.traderDayDatas
   );
 
-  const volumeData = positionChangedEvents.map((events, i) => {
+  if (customTimestamps?.length) {
+  }
+
+  const volumeData = dayDatas.map((events, i) => {
     return {
       volume: sumBy(events, (e: any) => {
-        return Number(formatUnits(e?.positionNotional, 18));
+        return Number(formatUnits(e?.tradingVolume, 18));
       }),
       fee: sumBy(events, (e: any) => {
         return Number(formatUnits(e?.fee, 18));

@@ -10,10 +10,11 @@ type Props = {
   format?: string;
   max?: number;
   isLoading?: boolean;
+  subtext?: string;
 };
 
 export default function StatCard(props: Props) {
-  const { title, icon, change, value, format, max, isLoading } = props;
+  const { title, icon, change, value, format, max, isLoading, subtext } = props;
   if (isLoading) {
     return (
       <Skeleton

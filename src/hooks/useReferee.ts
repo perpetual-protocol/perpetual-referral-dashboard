@@ -24,8 +24,10 @@ export function useReferee(referralCode: string) {
     () =>
       SUBGRAPH(`
         query {
-            referralCodes(where: { referees_contains: ["${account.toLowerCase()}"] }) {
-                id
+            trader(id: "${account.toLowerCase()}") {
+                refereeCode {
+                  id
+                }
             }
         }
   `),
@@ -36,7 +38,7 @@ export function useReferee(referralCode: string) {
 
   const referralCodeExists =
     !referralCode || refCodeExistsResponse?.data?.referralCode?.id;
-  const isReferee = refereeResponse?.data?.referralCodes?.length;
+  const isReferee = refereeResponse?.data?.trader?.refereeCode?.id;
 
   return {
     referralCodeExists,

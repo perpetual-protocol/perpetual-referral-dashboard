@@ -33,7 +33,7 @@ export default function MyReferral(props: Props) {
     isLoadingWeeklyVolume
   } = useReferral();
   const { showToast } = useToast();
-  const { referrerRewards, isLoading: isLoadingRewards } = useRewards(referees);
+  const { referrerRewards, isLoading: isLoadingRewards } = useRewards(referralCode);
   const chartData = {
     values: referralCodeDayData.map(v => v.newUsers),
     axis: referralCodeDayData.map(
@@ -135,7 +135,7 @@ export default function MyReferral(props: Props) {
             className='col-span-12 sm:col-span-6 border border-opacity-10 rounded-lg p-4 pb-0 pt-3'
             style={{ height: 'fit-content' }}
           >
-            <RewardsTiers />
+            <RewardsTiers type='referrer' />
           </div>
         </>
       )}

@@ -4,6 +4,7 @@ import dayjs from "dayjs";
 import { last, sum, sumBy } from "lodash";
 import { useQuery } from "react-query";
 import { SUBGRAPH } from "../utils/http";
+import { getReferrerRewards } from "../views/report/Report";
 import { calculateRefereesWeeklyVolume } from "./useReferral";
 import useStaking from "./useStaking";
 import useTrading, { getLastNWeeks, getTraderDayData } from "./useTrading";
@@ -12,27 +13,27 @@ export const refereeTiers = {
   1: {
     staked: 0,
     usd_cap: 200,
-    rebate: 0.05,
+    rebate: 0.4,
   },
   2: {
     staked: 100,
     usd_cap: 500,
-    rebate: 0.1,
+    rebate: 0.4,
   },
   3: {
     staked: 1000,
     usd_cap: 800,
-    rebate: 0.15,
+    rebate: 0.4,
   },
   4: {
     staked: 10000,
     usd_cap: 1200,
-    rebate: 0.2,
+    rebate: 0.4,
   },
   5: {
     staked: 100000,
     usd_cap: 25000,
-    rebate: 0.3,
+    rebate: 0.4,
   },
 };
 
@@ -40,32 +41,32 @@ export const referrerTiers = {
   1: {
     staked: 0,
     usd_cap: 300,
-    rebate: 0.05,
+    rebate: 0.7,
   },
   2: {
     staked: 100,
     usd_cap: 900,
-    rebate: 0.1,
+    rebate: 0.7,
   },
   3: {
     staked: 1000,
     usd_cap: 1440,
-    rebate: 0.15,
+    rebate: 0.7,
   },
   4: {
     staked: 10000,
     usd_cap: 2160,
-    rebate: 0.3,
+    rebate: 0.7,
   },
   5: {
     staked: 50000,
     usd_cap: 5000,
-    rebate: 0.4,
+    rebate: 0.7,
   },
   6: {
     staked: 100000,
     usd_cap: 10000,
-    rebate: 0.5,
+    rebate: 0.7,
   },
 };
 
@@ -93,17 +94,6 @@ export function calculateRefereeRewards(fees: number, stakedPerp: number) {
   return { tier, rebateUSD: 0 };
 }
 
-async function getWeeklyRefereeFee(account: string) {
-  const dayDataResponse = await getTraderDayData(account, getLastNWeeks(1));
-  const dayDatas = (dayDataResponse || []).map((e) => e.data?.traderDayDatas);
-  const aggregatedFees = dayDatas.map((dayData) => {
-    return sumBy(dayData, (d: any) => Number(formatUnits(d.fee, 18)));
-  });
-
-  const weeklyTotalFees = sum(aggregatedFees);
-  return weeklyTotalFees;
-}
-
 export function calculateReferrerRewards(stakedPerp: number, feesPaid: number) {
   const tier = Object.values(referrerTiers)
     .reverse()
@@ -120,26 +110,12 @@ export default function useRewards(referralCode?: string) {
   const { weeklyTradingFee } = useTrading(getCurrentWeek());
   const { data: stakedPerp, isLoading: isLoadingStakingData } = useStaking();
 
-  const {
-    data: weeklyReferralCodeVolumes,
-    isSuccess: calculatedWeeklyReferralCodeVolume,
-  } = useQuery(
-    ["weeklyReferralCodeVolume"],
-    () => calculateRefereesWeeklyVolume(referralCode),
-    {
-      enabled: !!referralCode,
-    }
-  );
-
   const { data: referrerRewards, isLoading } = useQuery(
-    ["referrerRebate", { stakedPerp, weeklyTradingFee, weeklyReferralCodeVolumes }],
+    ["referrerRebate"],
     () =>
-      calculateReferrerRewards(
-        Number(stakedPerp),
-        Number(last(weeklyReferralCodeVolumes).fees)
-      ),
+      getReferrerRewards(referralCode),
     {
-      enabled: !isLoadingStakingData && calculatedWeeklyReferralCodeVolume,
+      enabled: !isLoadingStakingData,
     }
   );
 

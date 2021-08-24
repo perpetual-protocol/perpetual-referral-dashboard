@@ -48,7 +48,7 @@ export default function RewardsTiers({ type }: Props) {
       <tbody>
         {Object.keys(tiers).map(tier => (
           <tr key={`tier-${tier}`} className='border-t border-white border-opacity-10 font-normal'>
-            <td className='w-1 py-4 text-left'>Tier {tiers[tier].tier}</td>
+            <td className='w-1 py-4 text-left'>Tier {tier}</td>
             <td className='w-1 py-4 text-right'>{numeral(tiers[tier].staked).format('0,0')}</td>
             <td className='w-1 py-4 text-right'>{numeral(tiers[tier].usd_cap).format('0,0')}</td>
           </tr>

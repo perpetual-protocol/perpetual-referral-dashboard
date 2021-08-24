@@ -90,8 +90,8 @@ export default function MyReferral(props: Props) {
           />
           <StatCard
             icon={<PerpLogoGreen />}
-            value={referrerRewards?.rebateUSD}
-            max={referrerRewards?.tier?.usd_cap}
+            value={referrerRewards?.rebates[0].rebateUSD}
+            max={referrerRewards?.rebates[0].tier}
             title='Weekly Rewards'
             isLoading={isLoadingRewards || isLoading}
           />

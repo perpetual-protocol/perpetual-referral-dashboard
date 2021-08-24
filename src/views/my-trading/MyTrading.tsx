@@ -149,7 +149,7 @@ export default function MyTrading(props: Props) {
         className='col-span-12 sm:col-span-6 border border-opacity-10 rounded-lg p-4 pb-0 pt-3'
         style={{ height: 'fit-content' }}
       >
-        <RewardsTiers />
+        <RewardsTiers type='referee' />
       </div>
     </>
   );

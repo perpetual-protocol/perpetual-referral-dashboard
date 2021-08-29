@@ -6,34 +6,6 @@ type Props = {
   type: 'referee' | 'referrer';
 };
 
-const tiers = [
-  {
-    tier: 1,
-    sperp_requirement: 0,
-    usd_cap: 100
-  },
-  {
-    tier: 2,
-    sperp_requirement: 100,
-    usd_cap: 500
-  },
-  {
-    tier: 3,
-    sperp_requirement: 1000,
-    usd_cap: 1000
-  },
-  {
-    tier: 4,
-    sperp_requirement: 10000,
-    usd_cap: 5000
-  },
-  {
-    tier: 5,
-    sperp_requirement: 100000,
-    usd_cap: 10000
-  }
-];
-
 export default function RewardsTiers({ type }: Props) {
   const tiers = type === 'referee' ?  refereeTiers : referrerTiers;
   return (

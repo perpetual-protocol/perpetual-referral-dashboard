@@ -84,7 +84,7 @@ async function getStakedPerp(account: string) {
 
 async function getFeesPaidByReferralCode(referralCodes: ReferralAndOwner[]) {
   // last complete week Sunday UTC 00:00 to Sunday UTC 00:00
-  const week = getLastNWeeks(1)[0];
+  const week = getLastNWeeks(2)[0];
   const feesPaid = await Promise.all(
     referralCodes.map(async (code) => {
       const dayDatasResponse = await SUBGRAPH(
@@ -108,9 +108,14 @@ async function getFeesPaidByReferralCode(referralCodes: ReferralAndOwner[]) {
 }
 
 export async function getReferrerRewards(referralCode?: string) {
+  // gets all the fees paid by traders
   const refereeFees = await getFeesPaidByReferees(referralCode);
+  // group them (the traders) by the referrer partner
   const refereeDataGroupedByReferrer = groupBy(refereeFees, "codeOwner");
   const rebates = await Promise.all(
+    // calculate the rebate for the referrer partner by calculating
+    // the rebate for the 'trader' with the amount of staked perp
+    // for the 'referrer partner' but using the 'referrer partner' tiers
     (Object.keys(refereeDataGroupedByReferrer) || []).map(async (referrer) => {
       const stakedPerp = await getStakedPerp(referrer);
       let referrerRebate = 0;
@@ -138,7 +143,7 @@ export async function getReferrerRewards(referralCode?: string) {
 }
 
 async function getFeesPaidByReferees(referralCode?: string) {
-  const week = getLastNWeeks(1)[0];
+  const week = getLastNWeeks(2)[0];
   let allRefereesWithFeesPaid: Record<string, any>[] = [];
   let needToFetchMoreReferees = true;
   let skip = 0;
@@ -226,7 +231,7 @@ export default function Report(props: Props) {
   const { data: refereeRewardsCSV, isSuccess: generatedRefereeRewardsCSV } =
     useQuery(["refereeRewards"], () => getRefereeRewards());
 
-  const week = getLastNWeeks(1)[0];
+  const week = getLastNWeeks(2)[0];
   const start = dayjs(week.start * 1000).format("DD-MM-YYYY");
   const end = dayjs(week.end * 1000).format("DD-MM-YYYY");
 

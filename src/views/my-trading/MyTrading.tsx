@@ -19,7 +19,6 @@ import { useReferee } from '../../hooks/useReferee';
 import { useState } from 'react';
 import Skeleton from '../../components/Skeleton';
 import dayjs from 'dayjs';
-import { useEffect } from 'react';
 
 type Props = {
   setActiveTab: Function;
@@ -37,10 +36,13 @@ export default function MyTrading(props: Props) {
   const { library } = useWeb3React();
   const { data, isLoading: isLoadingStakingData } = useStaking();
   const {
-    refereeRewards: { tier, rebateUSD }
+    refereeRewards: { tier, rebateUSD },
+    nextRefereeTier
   } = useRewards();
 
   const isLoadingData = isLoadingTradeData || isLoadingStakingData;
+  const cardState = nextRefereeTier ? 'error' : 'normal';
+  const stakeMoreText = nextRefereeTier ? `Stake ${nextRefereeTier?.staked} PERP to reach the next tier and unlock more rewards.` : '';
 
   const chartData = {
     values: volumeData.map(v => v.volume),
@@ -116,7 +118,14 @@ export default function MyTrading(props: Props) {
         title='Weekly Rewards'
         max={tier?.usd_cap}
         isLoading={isLoadingData}
-        subtext='Rewards are calculated in USD but are distributed in PERP'
+        subtext={stakeMoreText}
+        tooltip={
+          <div className='flex flex-col w-52'>
+            <span className='mb-2'>Rewards are calculated in USD but are distributed in PERP</span>
+            <span>The more transactions you make, the more perps rewards you will get, and the rewards will be automatically credited to your account every week.</span>
+          </div>
+        }
+        state={cardState}
       />
       <div className='col-span-12 mb-8'>
         <h5 className='text-white font-bold text-lg mb-4'>

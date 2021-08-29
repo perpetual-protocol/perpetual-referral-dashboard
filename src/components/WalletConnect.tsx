@@ -28,7 +28,6 @@ const LogoMap = {
 };
 
 export const injected = new InjectedConnector({
-  supportedChainIds: [100, 1337]
 });
 
 export const walletconnect = new WalletConnectConnector({

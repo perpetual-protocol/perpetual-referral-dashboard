@@ -8,6 +8,8 @@ import MyTrading from "../my-trading/MyTrading";
 import { useWeb3React } from "@web3-react/core";
 import { useState } from "react";
 import AppNav from "../app-nav/AppNav";
+import { useEffect } from "react";
+import { switchToXDAI } from "../../utils/switcher";
 
 const tabs = [
   {
@@ -21,12 +23,18 @@ const tabs = [
 ];
 
 export default function Home(props: unknown) {
-  const { active } = useWeb3React();
+  const { active, chainId, library } = useWeb3React();
   const [activeTab, setActiveTab] = useState(tabs[0].value);
 
   const onTabSelected = (tab: TabOption) => {
     setActiveTab(tab.value);
   };
+
+  useEffect(() => {
+    if (chainId && chainId !== 100) {
+      switchToXDAI(library);
+    }
+  }, [chainId])
 
   return (
     <div>

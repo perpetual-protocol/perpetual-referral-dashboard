@@ -14,26 +14,31 @@ export const refereeTiers = {
     staked: 0,
     usd_cap: 200,
     rebate: 0.4,
+    tier: 1
   },
   2: {
     staked: 100,
     usd_cap: 500,
     rebate: 0.4,
+    tier: 2
   },
   3: {
     staked: 1000,
     usd_cap: 800,
     rebate: 0.4,
+    tier: 3
   },
   4: {
     staked: 10000,
     usd_cap: 1200,
     rebate: 0.4,
+    tier: 4
   },
   5: {
     staked: 100000,
     usd_cap: 25000,
     rebate: 0.4,
+    tier: 5
   },
 };
 
@@ -42,31 +47,37 @@ export const referrerTiers = {
     staked: 0,
     usd_cap: 300,
     rebate: 0.7,
+    tier: 1
   },
   2: {
     staked: 100,
     usd_cap: 900,
     rebate: 0.7,
+    tier: 2
   },
   3: {
     staked: 1000,
     usd_cap: 1440,
     rebate: 0.7,
+    tier: 3
   },
   4: {
     staked: 10000,
     usd_cap: 2160,
     rebate: 0.7,
+    tier: 4
   },
   5: {
     staked: 50000,
     usd_cap: 5000,
     rebate: 0.7,
+    tier: 5
   },
   6: {
     staked: 100000,
     usd_cap: 10000,
     rebate: 0.7,
+    tier: 6
   },
 };
 
@@ -113,7 +124,7 @@ export default function useRewards(referralCode?: string) {
   const { data: referrerRewards, isLoading } = useQuery(
     ["referrerRebate"],
     () =>
-      getReferrerRewards(referralCode),
+    getReferrerRewards(referralCode),
     {
       enabled: !isLoadingStakingData,
     }
@@ -124,9 +135,14 @@ export default function useRewards(referralCode?: string) {
     Number(stakedPerp)
   );
 
+  const nextRefereeTier = refereeTiers[refereeRewards?.tier?.tier + 1];
+  const nextReferrerTier = referrerTiers[referrerRewards?.rebates[0]?.tier + 1];
+
   return {
     refereeRewards,
     referrerRewards,
+    nextRefereeTier,
+    nextReferrerTier,
     isLoading,
   };
 }

@@ -10,6 +10,7 @@
     "@ethersproject/contracts": "^5.4.0",
     "@ethersproject/providers": "^5.4.0",
     "@ethersproject/units": "^5.4.0",
+    "@tippyjs/react": "^4.2.5",
     "@types/lodash": "^4.14.171",
     "@types/react": "^17.0.11",
     "@walletconnect/web3-provider": "^1.5.0",

@@ -17,6 +17,7 @@ export default function ConnectWallet(props: Props) {
   const activateWallet = (name: ConnectorNames) => {
     activate(connectorsByName[name]);
   };
+
   return (
     <div style={{ maxWidth: '1200px' }} className='w-full flex flex-col items-center justify-center mt-20 mx-auto'>
       <div className='mb-12'>

@@ -1,6 +1,7 @@
-import React, { ReactElement } from 'react';
-import numeral from 'numeral';
-import Skeleton from './Skeleton';
+import React, { ReactElement } from "react";
+import numeral from "numeral";
+import Skeleton from "./Skeleton";
+import Tooltip from "./Tooltip";
 
 type Props = {
   title: string;
@@ -11,36 +12,59 @@ type Props = {
   max?: number;
   isLoading?: boolean;
   subtext?: string;
+  tooltip?: ReactElement;
+  state?: 'normal' | 'error';
 };
 
 export default function StatCard(props: Props) {
-  const { title, icon, change, value, format, max, isLoading, subtext } = props;
+  const {
+    title,
+    icon,
+    change,
+    value,
+    format,
+    max,
+    isLoading,
+    subtext,
+    tooltip,
+    state = 'normal'
+  } = props;
   if (isLoading) {
     return (
       <Skeleton
         height={160}
-        className='rounded-2xl bg-perp-gray-300 py-5 px-6 col-span-12 sm:col-span-6 md:col-span-4'
+        className="rounded-2xl bg-perp-gray-300 py-5 px-6 col-span-12 sm:col-span-6 md:col-span-4"
       />
     );
   }
 
-  const changeColor = change > 0 ? 'text-perp-light-green' : 'text-perp-red';
+  const changeColor = change > 0 ? "text-perp-light-green" : "text-perp-red";
+  const textColorClass = state === 'normal' ? 'text-white' : 'text-perp-red';
 
   return (
-    <div className='rounded-2xl bg-perp-gray-300 py-5 px-6 col-span-12 sm:col-span-6 md:col-span-4'>
-      <h6 className='text-perp-gray-50 text-sm mb-4'>{title}</h6>
-      <div className='flex items-center pb-12'>
-        <div className='mr-2'>{icon}</div>
-        <h2 className='text-white text-3xl font-bold mr-2'>
-          {numeral(value).format(format || '0,0')}
-        </h2>
-        {max && <span className='text-perp-gray-50 text-sm'>/ {max} MAX</span>}
-        {change !== undefined && (
-          <span className={`${changeColor}`}>
-            {numeral(change).format('+0.0%')}
-          </span>
-        )}
+    <div className="rounded-2xl bg-perp-gray-300 py-5 px-6 col-span-12 sm:col-span-6 md:col-span-4">
+      <div className="flex items-center mb-4">
+        <h6 className="text-perp-gray-50 text-sm pr-1">{title}</h6>
+        {tooltip && <Tooltip content={tooltip}/>}
       </div>
+      <div className="pb-2">
+        <div className="flex items-center">
+          <div className="mr-2">{icon}</div>
+          <h2 className={`${textColorClass} text-3xl font-bold mr-2`}>
+            {numeral(value).format(format || "0,0")}
+          </h2>
+          {max && (
+            <span className="text-perp-gray-50 text-sm">/ {max} MAX</span>
+          )}
+          {change !== undefined && (
+            <span className={`${changeColor}`}>
+              {numeral(change).format("+0.0%")}
+            </span>
+          )}
+        </div>
+      </div>
+      {subtext && <div className={`${textColorClass} text-sm mt-2`}>{subtext}</div>}
+
     </div>
   );
 }

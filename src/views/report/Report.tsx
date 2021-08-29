@@ -109,9 +109,10 @@ async function getFeesPaidByReferralCode(referralCodes: ReferralAndOwner[]) {
 
 export async function getReferrerRewards(referralCode?: string) {
   // gets all the fees paid by traders
-  const refereeFees = await getFeesPaidByReferees(referralCode);
+  const refereeFees = await getFeesPaidByReferees(referralCode, 1);
   // group them (the traders) by the referrer partner
   const refereeDataGroupedByReferrer = groupBy(refereeFees, "codeOwner");
+
   const rebates = await Promise.all(
     // calculate the rebate for the referrer partner by calculating
     // the rebate for the 'trader' with the amount of staked perp
@@ -120,18 +121,21 @@ export async function getReferrerRewards(referralCode?: string) {
       const stakedPerp = await getStakedPerp(referrer);
       let referrerRebate = 0;
       let tier = 0;
+      let usd_cap = 0;
       for (const refereeData of refereeDataGroupedByReferrer[referrer]) {
         const rebate = calculateReferrerRewards(
           stakedPerp,
           refereeData.totalFeesPaid
         );
         referrerRebate = referrerRebate + rebate.rebateUSD;
-        tier = rebate.tier.usd_cap;
+        tier = rebate.tier.tier;
+        usd_cap = rebate.tier.usd_cap;
       }
       return {
         referrer,
         rebateUSD: referrerRebate,
-        tier
+        tier,
+        usd_cap
       };
     })
   );
@@ -142,8 +146,8 @@ export async function getReferrerRewards(referralCode?: string) {
   }
 }
 
-async function getFeesPaidByReferees(referralCode?: string) {
-  const week = getLastNWeeks(2)[0];
+async function getFeesPaidByReferees(referralCode?: string, weeksToGoBack = 2) {
+  const week = getLastNWeeks(weeksToGoBack)[0];
   let allRefereesWithFeesPaid: Record<string, any>[] = [];
   let needToFetchMoreReferees = true;
   let skip = 0;

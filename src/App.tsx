@@ -2,7 +2,6 @@ import React from "react";
 import { Web3ReactProvider } from "@web3-react/core";
 import { QueryClient, QueryClientProvider } from "react-query";
 import Home from "./views/home/Home";
-import AppNav from "./views/app-nav/AppNav";
 import { Web3Provider } from "@ethersproject/providers";
 import { useState } from "react";
 import Toast from "./components/Toast";
@@ -18,6 +17,7 @@ import {
 import { CanvasRenderer } from "echarts/renderers";
 import { Route } from "wouter";
 import Report from "./views/report/Report";
+import Notify from "bnc-notify";
 echarts.use([
   LineChart,
   TitleComponent,
@@ -28,9 +28,15 @@ echarts.use([
 ]);
 
 const queryClient = new QueryClient();
+const notify = Notify({
+  dappId: "11c0b233-f345-4691-af21-275b3e1a7d0f",
+  networkId: 100,
+});
 
 export const ToastContext = React.createContext(null);
+export const NotifyContext = React.createContext(null);
 export const useToast = () => useContext(ToastContext);
+export const useNotify = () => useContext(NotifyContext);
 
 function getLibrary(provider) {
   return new Web3Provider(provider);
@@ -50,15 +56,17 @@ export default function App() {
 
   return (
     <ToastContext.Provider value={{ showToast }}>
-      <QueryClientProvider client={queryClient}>
-        <Web3ReactProvider getLibrary={getLibrary}>
-          <div className="flex flex-col w-full h-full font-body subpixel-antialiased">
-            <Route path="/" component={Home} />
-            <Route path="/report" component={Report} />
-          </div>
-        </Web3ReactProvider>
-      </QueryClientProvider>
-      <Toast isVisible={isToastVisible} text={toastText} />
+      <NotifyContext.Provider value={{ notify }}>
+        <QueryClientProvider client={queryClient}>
+          <Web3ReactProvider getLibrary={getLibrary}>
+            <div className="flex flex-col w-full h-full font-body subpixel-antialiased">
+              <Route path="/" component={Home} />
+              <Route path="/report" component={Report} />
+            </div>
+          </Web3ReactProvider>
+        </QueryClientProvider>
+        <Toast isVisible={isToastVisible} text={toastText} />
+      </NotifyContext.Provider>
     </ToastContext.Provider>
   );
 }

@@ -19,6 +19,8 @@ import { useReferee } from '../../hooks/useReferee';
 import { useState } from 'react';
 import Skeleton from '../../components/Skeleton';
 import dayjs from 'dayjs';
+import notify from 'bnc-notify';
+import { useNotify } from '../../App';
 
 type Props = {
   setActiveTab: Function;
@@ -26,6 +28,7 @@ type Props = {
 
 export default function MyTrading(props: Props) {
   const [refereeCode, setRefereeCode] = useState('');
+  const [isConfirmingTx, setIsConfirmingTx] = useState(false);
   const {
     volumeData,
     weeklyTradingVolume,
@@ -39,6 +42,7 @@ export default function MyTrading(props: Props) {
     refereeRewards: { tier, rebateUSD },
     nextRefereeTier
   } = useRewards();
+  const { notify } = useNotify();
 
   const isLoadingData = isLoadingTradeData || isLoadingStakingData;
   const cardState = nextRefereeTier ? 'error' : 'normal';
@@ -66,8 +70,18 @@ export default function MyTrading(props: Props) {
 
   const addReferralCode = async () => {
     if (referralCodeExists) {
-      await setReferralCode();
-      retryRefereeRequest();
+      const tx = await setReferralCode();
+      if (tx) {
+        setIsConfirmingTx(true);
+        const { emitter } = notify.hash(tx.hash);
+        emitter.on('txConfirmed', async () => {
+          setIsConfirmingTx(false);
+          await retryRefereeRequest();
+        })
+        emitter.on('txFailed', () => {
+          setIsConfirmingTx(false);
+        })
+      }
     }
   };
 
@@ -86,7 +100,7 @@ export default function MyTrading(props: Props) {
           )}
           <div className='mt-4'>
             <Button isFullWidth onClick={addReferralCode}>
-              Submit
+              {isConfirmingTx ? 'Loading...' : 'Submit'}
             </Button>
             <Button
               onClick={() => props.setActiveTab('my-referrals')}

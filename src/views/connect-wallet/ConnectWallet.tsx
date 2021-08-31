@@ -24,7 +24,7 @@ export default function ConnectWallet(props: Props) {
         <DiamondHands />
       </div>
       <div className='mb-8'>
-        <h1 className='text-white text-3xl font-bold'>
+        <h1 className='text-white text-center text-3xl font-bold'>
           Please connect your wallet
         </h1>
       </div>

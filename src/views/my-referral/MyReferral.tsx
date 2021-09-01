@@ -90,7 +90,7 @@ export default function MyReferral(props: Props) {
             isLoading={isLoading}
           />
           <StatCard
-            icon={<PerpLogoGreen />}
+            icon={<USDCLogo />}
             value={currentWeeklyReferralVolume}
             title="Weekly Trading Volume"
             change={weeklyReferralVolumeChange}

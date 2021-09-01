@@ -1,7 +1,6 @@
 import React, { ChangeEvent } from "react";
 
-import Modal from "../../components/Modal";
-import Input from "../../components/Input";
+import USDCLogo from '../../assets/usdc-logo.svg';
 import Button from "../../components/Button";
 import Copy from "../../assets/copy.svg";
 import useReferral from "../../hooks/useReferral";
@@ -98,8 +97,8 @@ export default function MyReferral(props: Props) {
             isLoading={isLoading}
           />
           <StatCard
-            icon={<PerpLogoGreen />}
-            value={referrerRewards?.rebates[0].rebateUSD}
+            icon={<USDCLogo />}
+            value={referrerRewards?.rebates[0]?.rebateUSD}
             title="Weekly Rewards"
             isLoading={isLoadingRewards || isLoading}
             subtext={stakeMoreText}

@@ -136,7 +136,7 @@ export default function MyTrading(props: Props) {
         tooltip={
           <div className='flex flex-col w-52'>
             <span className='mb-2'>Rewards are calculated in USD but are distributed in PERP</span>
-            <span>The more transactions you make, the more perps rewards you will get, and the rewards will be automatically credited to your account every week.</span>
+            <span>The more transactions you make, the more perps rewards you will get, and the rewards will be credited to your account every week.</span>
           </div>
         }
         state={cardState}

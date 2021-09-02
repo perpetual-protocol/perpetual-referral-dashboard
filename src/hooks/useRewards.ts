@@ -1,13 +1,8 @@
-import { formatUnits } from "@ethersproject/units";
-import { eachDayOfInterval, endOfWeek, startOfWeek, subWeeks } from "date-fns";
 import dayjs from "dayjs";
-import { last, sum, sumBy } from "lodash";
 import { useQuery } from "react-query";
-import { SUBGRAPH } from "../utils/http";
 import { getReferrerRewards } from "../views/report/Report";
-import { calculateRefereesWeeklyVolume } from "./useReferral";
 import useStaking from "./useStaking";
-import useTrading, { getLastNWeeks, getTraderDayData } from "./useTrading";
+import useTrading from "./useTrading";
 
 export const refereeTiers = {
   1: {
@@ -126,7 +121,7 @@ export default function useRewards(referralCode?: string) {
     () =>
     getReferrerRewards(referralCode),
     {
-      enabled: !isLoadingStakingData,
+      enabled: !isLoadingStakingData && referralCode != null,
     }
   );
 

@@ -109,7 +109,7 @@ export default function MyReferral(props: Props) {
                 </span>
                 <span>
                   The more transactions you make, the more perps rewards you
-                  will get, and the rewards will be automatically credited to
+                  will get, and the rewards will be credited to
                   your account every week.
                 </span>
               </div>

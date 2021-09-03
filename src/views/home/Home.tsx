@@ -10,6 +10,7 @@ import { useState } from "react";
 import AppNav from "../app-nav/AppNav";
 import { useEffect } from "react";
 import { switchToXDAI } from "../../utils/switcher";
+import { useGlobalState } from "../../AppStateHolder";
 
 const tabs = [
   {
@@ -23,7 +24,8 @@ const tabs = [
 ];
 
 export default function Home(props: unknown) {
-  const { active, chainId, library } = useWeb3React();
+  const { chainId, library } = useWeb3React();
+  const { canAccessApp } = useGlobalState();
   const [activeTab, setActiveTab] = useState(tabs[0].value);
 
   const onTabSelected = (tab: TabOption) => {
@@ -40,8 +42,8 @@ export default function Home(props: unknown) {
     <div>
       <AppNav />
       <div className="flex flex-grow flex-col items-center">
-        {!active && <ConnectWallet />}
-        {active && (
+        {!canAccessApp && <ConnectWallet />}
+        {canAccessApp && (
           <div className="flex justify-center bg-perp-gray-300 w-full px-4">
             <Tabs
               onTabSelected={onTabSelected}
@@ -50,7 +52,7 @@ export default function Home(props: unknown) {
             />
           </div>
         )}
-        {active && (
+        {canAccessApp && (
           <div
             className="grid grid-cols-12 mt-8 w-full gap-6 mb-20 px-4"
             style={{ maxWidth: "1200px" }}

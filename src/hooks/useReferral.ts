@@ -9,8 +9,10 @@ import { useEffect, useState } from "react";
 import dayjs from "dayjs";
 import { last, nth, sumBy, zip } from "lodash";
 import { formatUnits } from "@ethersproject/units";
+import { useGlobalState } from "../AppStateHolder";
 
 const CONTRACT_ADDRESS = "0xF1d5BA04a25A6D88c468af932BFe2B1e78db7B45";
+const DOMAIN = 'https://referral.perp.exchange'
 
 export async function callReferrerContract(
   provider: BaseProvider,
@@ -102,7 +104,7 @@ function getVolumeChange(current: number, last: number) {
 }
 
 export default function useReferral() {
-  const { active, account } = useWeb3React();
+  const { canAccessApp, account } = useGlobalState();
   const [_referees, _setReferees] = useState([]);
   const [_referralCode, _setReferralCode] = useState("");
   const days = getLastNWeeks().map((d) => ({
@@ -130,7 +132,7 @@ export default function useReferral() {
         }
     `),
       {
-        enabled: active,
+        enabled: canAccessApp,
         onSuccess: (response) => {
           _setReferees(response?.data?.trader?.referrerCode?.referees);
           _setReferralCode(response?.data?.trader?.referrerCode?.id);
@@ -185,6 +187,7 @@ export default function useReferral() {
   const totalReferees =
     referrerResponse?.data?.trader?.referrerCode?.referees?.length;
   const referees = referrerResponse?.data?.trader?.referrerCode?.referees;
+  const referralLink = `${DOMAIN}?code=${referralCode}`;
 
   return {
     referralCode,
@@ -197,5 +200,6 @@ export default function useReferral() {
     isLoadingDayDatas,
     isLoadingReferralCodeData,
     isLoadingWeeklyVolume,
+    referralLink
   };
 }

@@ -4,12 +4,13 @@ import Pipe from '../../assets/pipe.svg';
 import PerpLogo from '../../assets/logo.svg';
 import WalletConnect from '../../components/WalletConnect';
 import { useWeb3React } from '@web3-react/core';
+import { useGlobalState } from '../../AppStateHolder';
 
 type Props = {};
 
 export default function AppNav(props: Props) {
-  const { active } = useWeb3React();
-  const bgClass = active ? 'bg-perp-gray-300' : 'bg-perp-body';
+  const { canAccessApp } = useGlobalState();
+  const bgClass = canAccessApp ? 'bg-perp-gray-300' : 'bg-perp-body';
   return (
     <div className={`${bgClass} flex justify-center px-4`}>
       <div

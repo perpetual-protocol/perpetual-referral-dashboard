@@ -8,7 +8,7 @@ import PerpLogoGreen from '../../assets/logo-green.svg';
 import USDCLogo from '../../assets/usdc-logo.svg';
 import useStaking from '../../hooks/useStaking';
 import Button from '../../components/Button';
-import Wallet from '../../assets/subtract.svg';
+import Wallet from '../../assets/wallet.svg';
 import RewardsTiers from '../../components/RewardsTiers';
 import useRewards from '../../hooks/useRewards';
 import Input from '../../components/Input';
@@ -19,15 +19,20 @@ import { useReferee } from '../../hooks/useReferee';
 import { useState } from 'react';
 import Skeleton from '../../components/Skeleton';
 import dayjs from 'dayjs';
-import notify from 'bnc-notify';
 import { useNotify } from '../../App';
 
 type Props = {
   setActiveTab: Function;
 };
 
+const getPreAppliedCode = () => {
+  const urlQuery = new URLSearchParams(window.location.search);
+  const preAppliedCode = urlQuery.get('code');
+  return preAppliedCode || '';
+}
+
 export default function MyTrading(props: Props) {
-  const [refereeCode, setRefereeCode] = useState('');
+  const [refereeCode, setRefereeCode] = useState(getPreAppliedCode());
   const [isConfirmingTx, setIsConfirmingTx] = useState(false);
   const {
     volumeData,
@@ -92,7 +97,7 @@ export default function MyTrading(props: Props) {
           <h1 className='text-white font-semibold text-lg text-center mb-5'>
             Please enter a referral code to start trading.
           </h1>
-          <Input onChange={onRefereeCodeChange} placeholder='Referral Code' />
+          <Input value={refereeCode} onChange={onRefereeCodeChange} placeholder='Referral Code' />
           {!referralCodeExists && (
             <span className='text-perp-red text-sm'>
               This referral code does not exist.

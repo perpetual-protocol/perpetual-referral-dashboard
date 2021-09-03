@@ -6,6 +6,7 @@ import utc from 'dayjs/plugin/utc';
 import { sum, sumBy } from 'lodash';
 import { useWeb3React } from '@web3-react/core';
 import { fromUnixTime } from 'date-fns';
+import { useGlobalState } from '../AppStateHolder';
 dayjs.extend(utc);
 
 export function getLast7Days() {
@@ -62,7 +63,8 @@ export function getTraderDayData(
 export default function useTrading(
   customTimestamps?: { start: number; end: number }[]
 ) {
-  const { account, active } = useWeb3React();
+  const { canAccessApp, account } = useGlobalState();
+
   const days = getLastNWeeks().map(d => ({
     start: dayjs(d.start * 1000)
       .utc()
@@ -76,7 +78,7 @@ export default function useTrading(
     ['traderDayDatas', { account, customTimestamps }],
     () => getTraderDayData(account, customTimestamps),
     {
-      enabled: active
+      enabled: canAccessApp
     }
   );
 

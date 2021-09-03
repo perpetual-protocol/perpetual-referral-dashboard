@@ -9,7 +9,7 @@ import PerpLogoGreen from "../../assets/logo-green.svg";
 import { useToast } from "../../App";
 import { CopyToClipboard } from "react-copy-to-clipboard";
 import LineChart from "../../components/LineChart";
-import Wallet from "../../assets/subtract.svg";
+import Wallet from "../../assets/wallet.svg";
 import RewardsTiers from "../../components/RewardsTiers";
 import useRewards from "../../hooks/useRewards";
 import dayjs from "dayjs";
@@ -22,7 +22,7 @@ export default function MyReferral(props: Props) {
   const {
     referralCode,
     totalReferees,
-    referees,
+    referralLink,
     referralCodeDayData,
     weeklyRefereeVolumes,
     currentWeeklyReferralVolume,
@@ -70,7 +70,7 @@ export default function MyReferral(props: Props) {
               My Code: {referralCode}
             </span>
             <CopyToClipboard
-              text={referralCode}
+              text={referralLink}
               onCopy={() => showToast("Copied code to clipboard")}
             >
               <button>

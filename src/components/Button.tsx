@@ -1,6 +1,6 @@
 import React, { ReactElement } from 'react';
 
-type Size = 'sm' | 'md' | 'lg';
+export type Size = 'sm' | 'md' | 'lg';
 type ButtonType = 'primary' | 'secondary' | 'destructive';
 
 type Props = {
@@ -31,7 +31,7 @@ export default function Button(props: Props) {
       case 'md':
         return 'py-3 px-6 text-base';
       case 'lg':
-        return '';
+        return 'py-3 px-6 text-base';
     }
   };
 

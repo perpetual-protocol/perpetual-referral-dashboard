@@ -5,6 +5,7 @@ import { Contract } from '@ethersproject/contracts';
 import StakingContractABI from '../contracts/Staking.json';
 import { useQuery } from 'react-query';
 import { formatUnits } from '@ethersproject/units';
+import { useGlobalState } from '../AppStateHolder';
 
 const CONTRACT_ADDRESS = '0x0f346e19F01471C02485DF1758cfd3d624E399B4';
 
@@ -18,13 +19,13 @@ const getStakedPerp = async (account: string) => {
 };
 
 export default function useStaking() {
-  const { account, active } = useWeb3React();
+  const { canAccessApp, account } = useGlobalState();
 
   const { isLoading, data } = useQuery(
     ['staked_perp', { account }],
     () => getStakedPerp(account),
     {
-      enabled: active
+      enabled: canAccessApp
     }
   );
 

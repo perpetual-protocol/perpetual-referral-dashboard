@@ -28,13 +28,7 @@ export const refereeTiers = {
     usd_cap: 1200,
     rebate: 0.4,
     tier: 4
-  },
-  5: {
-    staked: 100000,
-    usd_cap: 25000,
-    rebate: 0.4,
-    tier: 5
-  },
+  }
 };
 
 export const referrerTiers = {
@@ -61,19 +55,7 @@ export const referrerTiers = {
     usd_cap: 2160,
     rebate: 0.7,
     tier: 4
-  },
-  5: {
-    staked: 50000,
-    usd_cap: 5000,
-    rebate: 0.7,
-    tier: 5
-  },
-  6: {
-    staked: 100000,
-    usd_cap: 10000,
-    rebate: 0.7,
-    tier: 6
-  },
+  }
 };
 
 function getCurrentWeek() {

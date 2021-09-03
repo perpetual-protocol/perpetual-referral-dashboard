@@ -18,6 +18,7 @@ import { CanvasRenderer } from "echarts/renderers";
 import { Route } from "wouter";
 import Report from "./views/report/Report";
 import Notify from "bnc-notify";
+import AppStateProvider from "./AppStateHolder";
 echarts.use([
   LineChart,
   TitleComponent,
@@ -59,10 +60,12 @@ export default function App() {
       <NotifyContext.Provider value={{ notify }}>
         <QueryClientProvider client={queryClient}>
           <Web3ReactProvider getLibrary={getLibrary}>
-            <div className="flex flex-col w-full h-full font-body subpixel-antialiased">
-              <Route path="/" component={Home} />
-              <Route path="/report" component={Report} />
-            </div>
+            <AppStateProvider>
+              <div className="flex flex-col w-full h-full font-body subpixel-antialiased">
+                <Route path="/" component={Home} />
+                <Route path="/report" component={Report} />
+              </div>
+            </AppStateProvider>
           </Web3ReactProvider>
         </QueryClientProvider>
         <Toast isVisible={isToastVisible} text={toastText} />

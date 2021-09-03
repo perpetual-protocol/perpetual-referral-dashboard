@@ -1,9 +1,10 @@
 import { useWeb3React } from '@web3-react/core';
 import { useQuery } from 'react-query';
+import { useGlobalState } from '../AppStateHolder';
 import { SUBGRAPH } from '../utils/http';
 
 export function useReferee(referralCode: string) {
-  const { account, active } = useWeb3React();
+  const { canAccessApp, account } = useGlobalState();
   const { data: refCodeExistsResponse } = useQuery(
     ['referralCode', { referralCode }],
     () =>
@@ -32,7 +33,7 @@ export function useReferee(referralCode: string) {
         }
   `),
     {
-      enabled: active
+      enabled: canAccessApp
     }
   );
 

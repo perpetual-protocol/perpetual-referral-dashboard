@@ -3,7 +3,7 @@ import { SUBGRAPH } from '../utils/http';
 import dayjs, { Dayjs } from 'dayjs';
 import { formatUnits } from '@ethersproject/units';
 import utc from 'dayjs/plugin/utc';
-import { sum, sumBy } from 'lodash';
+import { last, sum, sumBy } from 'lodash';
 import { useWeb3React } from '@web3-react/core';
 import { fromUnixTime } from 'date-fns';
 import { useGlobalState } from '../AppStateHolder';
@@ -34,7 +34,7 @@ export function getLastNWeeks(window = 7) {
     .map((week: Dayjs) => {
       return {
         start: Math.round(week.utc().startOf('week').valueOf() / 1000),
-        end: Math.round(week.utc().endOf('week').endOf('day').valueOf() / 1000)
+        end: Math.round(week.utc().endOf('week').startOf('day').valueOf() / 1000)
       };
     })
     .reverse();
@@ -86,9 +86,6 @@ export default function useTrading(
     d => d.data?.traderDayDatas
   );
 
-  if (customTimestamps?.length) {
-  }
-
   const volumeData = dayDatas.map((events, i) => {
     return {
       volume: sumBy(events, (e: any) => {
@@ -101,8 +98,8 @@ export default function useTrading(
     };
   });
 
-  const weeklyTradingVolume = sum(volumeData.map(v => v.volume));
-  const weeklyTradingFee = sum(volumeData.map(v => v.fee));
+  const weeklyTradingVolume = last(volumeData)?.volume;
+  const weeklyTradingFee = last(volumeData)?.fee;
 
   return {
     volumeData,

@@ -95,7 +95,7 @@ export function calculateReferrerRewards(stakedPerp: number, feesPaid: number) {
 }
 
 export default function useRewards(referralCode?: string) {
-  const { weeklyTradingFee } = useTrading(getCurrentWeek());
+  const { weeklyTradingFee } = useTrading();
   const { data: stakedPerp, isLoading: isLoadingStakingData } = useStaking();
 
   const { data: referrerRewards, isLoading } = useQuery(

@@ -122,6 +122,7 @@ export async function getReferrerRewards(referralCode?: string) {
       let referrerRebate = 0;
       let tier = 0;
       let usd_cap = 0;
+      console.log('sperp', stakedPerp)
       for (const refereeData of refereeDataGroupedByReferrer[referrer]) {
         const rebate = calculateReferrerRewards(
           stakedPerp,

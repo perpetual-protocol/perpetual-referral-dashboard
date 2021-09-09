@@ -17,8 +17,8 @@ type Props = {};
 
 const rewardsFields = [
   "owner",
-  "rebate.rebateUSD",
-  "rebate.tier.rebate",
+  "referrerPartner",
+  "tier",
   "totalFeesPaid",
 ];
 
@@ -122,7 +122,6 @@ export async function getReferrerRewards(referralCode?: string) {
       let referrerRebate = 0;
       let tier = 0;
       let usd_cap = 0;
-      console.log('sperp', stakedPerp)
       for (const refereeData of refereeDataGroupedByReferrer[referrer]) {
         const rebate = calculateReferrerRewards(
           stakedPerp,
@@ -209,7 +208,8 @@ async function getRefereeRewards() {
       );
       return {
         ...referee,
-        rebate,
+        referrerPartner: referee.codeOwner,
+        tier: rebate.rebateUSD,
       };
     })
   );

@@ -34,7 +34,7 @@ export function getLastNWeeks(window = 7) {
     .map((week: Dayjs) => {
       return {
         start: Math.round(week.utc().startOf('week').valueOf() / 1000),
-        end: Math.round(week.utc().endOf('week').startOf('day').valueOf() / 1000)
+        end: Math.round(week.utc().endOf('week').endOf('day').valueOf() / 1000)
       };
     })
     .reverse();
@@ -44,11 +44,12 @@ export function getTraderDayData(
   account: string,
   customWeeks: { start: number; end: number }[]
 ) {
+  
   const timestamps = customWeeks || getLastNWeeks(7);
-  const promises = timestamps.map(timestamp => {
-    return SUBGRAPH(`
+  const promises = timestamps.map(async timestamp => {
+    const res = await SUBGRAPH(`
         query {
-            traderDayDatas(where: { trader: "${account.toLowerCase()}", date_gte: ${timestamp.start}, date_lte: ${timestamp.end}}, orderDirection: desc, orderBy: date) {
+            traderDayDatas(where: { trader: "${account.toLowerCase()}", date_gte: ${timestamp.start}, date_lt: ${timestamp.end}}, orderDirection: desc, orderBy: date) {
                 id
                 tradingVolume
                 date
@@ -56,6 +57,7 @@ export function getTraderDayData(
             }
         }
     `);
+    return res;
   });
   return Promise.all(promises);
 }

@@ -18,13 +18,13 @@ type Props = {};
 const rewardsFields = [
   "owner",
   "referrerPartner",
-  "tier",
+  "usd_cap",
   "totalFeesPaid",
 ];
 
 const referrerRewardsFields = [
   "referrer",
-  "tier",
+  "usd_cap",
   "rebateUSD"
 ];
 
@@ -89,7 +89,7 @@ async function getFeesPaidByReferralCode(referralCodes: ReferralAndOwner[]) {
     referralCodes.map(async (code) => {
       const dayDatasResponse = await SUBGRAPH(
         `query {
-                referralCodeDayDatas(where: { referralCode: "${code.id}", date_gte: ${week.start}, date_lte: ${week.end}}) {
+                referralCodeDayDatas(where: { referralCode: "${code.id}", date_gte: ${week.start}, date_lt: ${week.end}}) {
                     fees
                 }
             }`
@@ -109,7 +109,7 @@ async function getFeesPaidByReferralCode(referralCodes: ReferralAndOwner[]) {
 
 export async function getReferrerRewards(referralCode?: string) {
   // gets all the fees paid by traders
-  const refereeFees = await getFeesPaidByReferees(referralCode, 1);
+  const refereeFees = await getFeesPaidByReferees(referralCode, 2);
   // group them (the traders) by the referrer partner
   const refereeDataGroupedByReferrer = groupBy(refereeFees, "codeOwner");
 
@@ -128,7 +128,6 @@ export async function getReferrerRewards(referralCode?: string) {
           refereeData.totalFeesPaid
         );
         referrerRebate = referrerRebate + rebate.rebateUSD;
-        tier = rebate.tier.tier;
         usd_cap = rebate.tier.usd_cap;
       }
       return {
@@ -167,7 +166,7 @@ async function getFeesPaidByReferees(referralCode?: string, weeksToGoBack = 2) {
                 id
               }
             }
-            dayData(where: { date_gte: ${week.start}, date_lte: ${week.end}}) {
+            dayData(where: { date_gte: ${week.start}, date_lt: ${week.end}}) {
               fee
             }
           }
@@ -209,7 +208,8 @@ async function getRefereeRewards() {
       return {
         ...referee,
         referrerPartner: referee.codeOwner,
-        tier: rebate.rebateUSD,
+        rebateUSD: rebate.rebateUSD,
+        usd_cap: rebate?.tier.usd_cap
       };
     })
   );
@@ -237,18 +237,18 @@ export default function Report(props: Props) {
     useQuery(["refereeRewards"], () => getRefereeRewards());
 
   const week = getLastNWeeks(2)[0];
-  const start = dayjs(week.start * 1000).format("DD-MM-YYYY");
-  const end = dayjs(week.end * 1000).format("DD-MM-YYYY");
+  const start = dayjs(week.start * 1000).utc().format("DD-MM-YYYY HH:mm");
+  const end = dayjs(week.end * 1000).utc().format("DD-MM-YYYY HH:mm");
 
   return (
     <div className="flex items-center justify-center w-full h-full flex-col">
       <span className="text-white">
-        Generated rewards for {start}-{end}
+        Generated rewards for {start} to {end}
       </span>
       <div className="mb-2 mt-2">
         {generatedReferrerRewardsCSV && (
           <CSVLink
-            filename={`perp-referrer-rewards-${start}-${end}.csv`}
+            filename={`perp-referrer-rewards-${start}to${end}.csv`}
             data={referrerRewardsCSV.csv || ""}
           >
             <Button onClick={() => false}>Download Referrer CSV</Button>

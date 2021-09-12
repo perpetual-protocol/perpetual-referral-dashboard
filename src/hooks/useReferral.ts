@@ -41,7 +41,7 @@ export async function calculateRefereesWeeklyVolume(
     _weeks.map((week) => {
       return SUBGRAPH(`
       query {
-        referralCodeDayDatas(where: { date_gte: ${week.start}, date_lte: ${week.end}, referralCode: "${referralCode}"} ) {
+        referralCodeDayDatas(where: { date_gte: ${week.start}, date_lt: ${week.end}, referralCode: "${referralCode}"} ) {
           tradingVolume
           fees
           date
@@ -87,7 +87,7 @@ async function getWeeklyNewReferees(
   const promises = timestamps.map((timestamp) => {
     return SUBGRAPH(`
         query {
-            referralCodeDayDatas(where: { referralCode: "${referralCode}", date_gte: ${timestamp.start}, date_lte: ${timestamp.end} }, orderDirection: desc, orderBy: date) {
+            referralCodeDayDatas(where: { referralCode: "${referralCode}", date_gte: ${timestamp.start}, date_lt: ${timestamp.end} }, orderDirection: desc, orderBy: date) {
                 date
                 newReferees
             }

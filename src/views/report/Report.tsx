@@ -15,18 +15,9 @@ import dayjs from "dayjs";
 
 type Props = {};
 
-const rewardsFields = [
-  "owner",
-  "referrerPartner",
-  "usd_cap",
-  "totalFeesPaid",
-];
+const rewardsFields = ["owner", "referrerPartner", "usd_cap", "totalFeesPaid"];
 
-const referrerRewardsFields = [
-  "referrer",
-  "usd_cap",
-  "rebateUSD"
-];
+const referrerRewardsFields = ["referrer", "usd_cap", "rebateUSD"];
 
 async function getReferralCodes() {
   let allReferralCodes = [];
@@ -107,9 +98,12 @@ async function getFeesPaidByReferralCode(referralCodes: ReferralAndOwner[]) {
   return feesPaid;
 }
 
-export async function getReferrerRewards(referralCode?: string) {
+export async function getReferrerRewards(
+  weeksToGoBack: number,
+  referralCode?: string
+) {
   // gets all the fees paid by traders
-  const refereeFees = await getFeesPaidByReferees(referralCode, 2);
+  const refereeFees = await getFeesPaidByReferees(weeksToGoBack, referralCode);
   // group them (the traders) by the referrer partner
   const refereeDataGroupedByReferrer = groupBy(refereeFees, "codeOwner");
 
@@ -134,23 +128,23 @@ export async function getReferrerRewards(referralCode?: string) {
         referrer,
         rebateUSD: referrerRebate,
         tier,
-        usd_cap
+        usd_cap,
       };
     })
   );
   const csv = parse(rebates, { fields: referrerRewardsFields });
   return {
     csv,
-    rebates
-  }
+    rebates,
+  };
 }
 
-async function getFeesPaidByReferees(referralCode?: string, weeksToGoBack = 2) {
+async function getFeesPaidByReferees(weeksToGoBack: number, referralCode?: string,) {
   const week = getLastNWeeks(weeksToGoBack)[0];
   let allRefereesWithFeesPaid: Record<string, any>[] = [];
   let needToFetchMoreReferees = true;
   let skip = 0;
-  let additionalFilter = referralCode ? `, refereeCode: "${referralCode}"` : '';
+  let additionalFilter = referralCode ? `, refereeCode: "${referralCode}"` : "";
   // don't know how many total codes there are
   // so we run an exhaustive request loops to
   // check if there are more to get a full list
@@ -197,7 +191,7 @@ async function getFeesPaidByReferees(referralCode?: string, weeksToGoBack = 2) {
 
 async function getRefereeRewards() {
   // list of all referees and their paid fees
-  const refereeList = await getFeesPaidByReferees();
+  const refereeList = await getFeesPaidByReferees(1);
   const rewards = await Promise.all(
     refereeList.map(async (referee) => {
       const stakedPerp = await getStakedPerp(referee.owner);
@@ -209,7 +203,7 @@ async function getRefereeRewards() {
         ...referee,
         referrerPartner: referee.codeOwner,
         rebateUSD: rebate.rebateUSD,
-        usd_cap: rebate?.tier.usd_cap
+        usd_cap: rebate?.tier.usd_cap,
       };
     })
   );
@@ -237,8 +231,12 @@ export default function Report(props: Props) {
     useQuery(["refereeRewards"], () => getRefereeRewards());
 
   const week = getLastNWeeks(2)[0];
-  const start = dayjs(week.start * 1000).utc().format("DD-MM-YYYY HH:mm");
-  const end = dayjs(week.end * 1000).utc().format("DD-MM-YYYY HH:mm");
+  const start = dayjs(week.start * 1000)
+    .utc()
+    .format("DD-MM-YYYY HH:mm");
+  const end = dayjs(week.end * 1000)
+    .utc()
+    .format("DD-MM-YYYY HH:mm");
 
   return (
     <div className="flex items-center justify-center w-full h-full flex-col">

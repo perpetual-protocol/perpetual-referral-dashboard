@@ -101,7 +101,7 @@ export default function useRewards(referralCode?: string) {
   const { data: referrerRewards, isLoading } = useQuery(
     ["referrerRebate"],
     () =>
-    getReferrerRewards(referralCode),
+    getReferrerRewards(1, referralCode),
     {
       enabled: !isLoadingStakingData && referralCode != null,
     }

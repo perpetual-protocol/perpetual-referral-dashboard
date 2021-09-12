@@ -141,6 +141,7 @@ export async function getReferrerRewards(
 
 async function getFeesPaidByReferees(weeksToGoBack: number, referralCode?: string,) {
   const week = getLastNWeeks(weeksToGoBack)[0];
+  console.log('generating for', week)
   let allRefereesWithFeesPaid: Record<string, any>[] = [];
   let needToFetchMoreReferees = true;
   let skip = 0;
@@ -191,7 +192,7 @@ async function getFeesPaidByReferees(weeksToGoBack: number, referralCode?: strin
 
 async function getRefereeRewards() {
   // list of all referees and their paid fees
-  const refereeList = await getFeesPaidByReferees(1);
+  const refereeList = await getFeesPaidByReferees(2);
   const rewards = await Promise.all(
     refereeList.map(async (referee) => {
       const stakedPerp = await getStakedPerp(referee.owner);
@@ -225,7 +226,7 @@ export default function Report(props: Props) {
   );
 
   const { data: referrerRewardsCSV, isSuccess: generatedReferrerRewardsCSV } =
-    useQuery(["referrerRewards"], () => getReferrerRewards());
+    useQuery(["referrerRewards"], () => getReferrerRewards(2));
 
   const { data: refereeRewardsCSV, isSuccess: generatedRefereeRewardsCSV } =
     useQuery(["refereeRewards"], () => getRefereeRewards());

@@ -15,7 +15,7 @@ import dayjs from "dayjs";
 
 type Props = {};
 
-const rewardsFields = ["owner", "referrerPartner", "usd_cap", "totalFeesPaid"];
+const rewardsFields = ["owner", "referrerPartner", "usd_cap", "totalFeesPaid", "rebateUSD"];
 
 const referrerRewardsFields = ["referrer", "usd_cap", "rebateUSD"];
 

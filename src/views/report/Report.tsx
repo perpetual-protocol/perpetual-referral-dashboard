@@ -123,6 +123,7 @@ export async function getReferrerRewards(
         );
         referrerRebate = referrerRebate + rebate.rebateUSD;
         usd_cap = rebate.tier.usd_cap;
+        tier = rebate.tier.tier;
       }
       return {
         referrer,

@@ -111,7 +111,6 @@ export default function useRewards(referralCode?: string) {
     weeklyTradingFee,
     Number(stakedPerp)
   );
-
   const nextRefereeTier = refereeTiers[refereeRewards?.tier?.tier + 1];
   const nextReferrerTier = referrerTiers[referrerRewards?.rebates[0]?.tier + 1];
 

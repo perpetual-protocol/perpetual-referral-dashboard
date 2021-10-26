@@ -104,6 +104,7 @@ export async function getReferrerRewards(
 ) {
   // gets all the fees paid by traders
   const refereeFees = await getFeesPaidByReferees(weeksToGoBack, referralCode);
+  console.log('fees', refereeFees);
   // group them (the traders) by the referrer partner
   const refereeDataGroupedByReferrer = groupBy(refereeFees, "codeOwner");
 

@@ -3,7 +3,7 @@ import { useQuery } from 'react-query';
 import { useGlobalState } from '../AppStateHolder';
 import { SUBGRAPH } from '../utils/http';
 
-export function useReferee(referralCode: string) {
+export function useReferee(referralCode?: string) {
   const { canAccessApp, account } = useGlobalState();
   const { data: refCodeExistsResponse } = useQuery(
     ['referralCode', { referralCode }],

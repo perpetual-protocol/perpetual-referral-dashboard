@@ -34,26 +34,26 @@ export const refereeTiers = {
 export const referrerTiers = {
   1: {
     staked: 0,
-    usd_cap: 300,
-    rebate: 0.7,
+    usd_cap: 100,
+    rebate: 0.2,
     tier: 1
   },
   2: {
-    staked: 100,
-    usd_cap: 900,
-    rebate: 0.7,
+    staked: 1000,
+    usd_cap: 1000,
+    rebate: 0.3,
     tier: 2
   },
   3: {
-    staked: 1000,
-    usd_cap: 1440,
-    rebate: 0.7,
+    staked: 2000,
+    usd_cap: 2000,
+    rebate: 0.4,
     tier: 3
   },
   4: {
     staked: 10000,
-    usd_cap: 2160,
-    rebate: 0.7,
+    usd_cap: 999999999999,
+    rebate: 0.5,
     tier: 4
   }
 };

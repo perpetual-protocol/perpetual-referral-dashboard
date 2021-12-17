@@ -62,6 +62,10 @@ export default function App() {
           <Web3ReactProvider getLibrary={getLibrary}>
             <AppStateProvider>
               <div className="flex flex-col w-full h-full font-body subpixel-antialiased">
+                <a href="https://referral.perp.com" target="_blank" className='flex font-semibold w-full p-4 bg-perp-light-green justify-center'>
+                  V2 of the referral program has launched! The Perpetual Protocol V1 referral program has been stopped.
+                  You can go to V2 by clicking this banner.
+                </a>
                 <Route path="/" component={Home} />
                 <Route path="/report" component={Report} />
               </div>

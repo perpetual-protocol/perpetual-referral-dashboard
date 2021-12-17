@@ -1,11 +1,10 @@
 import { formatUnits } from "@ethersproject/units";
-import { groupBy, sum, sumBy } from "lodash";
+import { sum } from "lodash";
 import React from "react";
 import { useQuery } from "react-query";
 import {
   calculateRefereeRewards,
   calculateReferrerRewards,
-  referrerTiers,
 } from "../../hooks/useRewards";
 import { getLastNWeeks } from "../../hooks/useTrading";
 import { STAKED_SUBGRAPH, SUBGRAPH } from "../../utils/http";
@@ -17,8 +16,7 @@ import dayjs from "dayjs";
 type Props = {};
 
 const rewardsFields = [
-  "owner",
-  "referrerPartner",
+  "referee",
   "usd_cap",
   "totalFeesPaid",
   "rebateUSD",
@@ -87,7 +85,10 @@ async function getFeesByTraderByReferralCode(
   // last complete week Sunday UTC 00:00 to Sunday UTC 00:00
   const feesPaid = await Promise.all(
     referralCodes.map(async (code) => {
-      const traderFeesPaid = await getTotalFeesPaidByReferralCode(weeksToGoBack, code.id);
+      const traderFeesPaid = await getTotalFeesPaidByReferralCode(
+        weeksToGoBack,
+        code.id
+      );
       return {
         ...code,
         traderFeesPaid,
@@ -106,6 +107,7 @@ export async function getReferrerRewards(
     referralCodes,
     weeksToGoBack
   );
+
   const rebates = await Promise.all(
     // calculate the rebate for the referrer partner by calculating
     // the rebate for the 'trader' with the amount of staked perp
@@ -261,19 +263,41 @@ async function getTotalFeesPaidByReferralCode(
   return feesPerTrader;
 }
 
-async function getRefereeRewards() {
+async function getRefereeRewards(
+  referralCodes: ReferralAndOwner[],
+  weeksToGoBack: number
+) {
   // list of all referees and their paid fees
-  const refereeList = await getFeesPaidByReferees(2);
+  // gets all the fees paid by traders
+  const codeFees = await getFeesByTraderByReferralCode(
+    referralCodes,
+    weeksToGoBack
+  );
+
+  const aggregateFeesPaidByReferees: Record<string, number> = {};
+  for (const feeData of codeFees) {
+    const feesPaidByTraders = feeData.traderFeesPaid || {};
+    for (const referee of Object.keys(feesPaidByTraders)) {
+      const feesPaid = feesPaidByTraders[referee];
+      if (!aggregateFeesPaidByReferees[referee]) {
+        aggregateFeesPaidByReferees[referee] = feesPaid;
+      } else {
+        aggregateFeesPaidByReferees[referee] =
+          aggregateFeesPaidByReferees[referee] + feesPaid;
+      }
+    }
+  }
+
   const rewards = await Promise.all(
-    refereeList.map(async (referee) => {
-      const stakedPerp = await getStakedPerp(referee.owner);
+    Object.keys(aggregateFeesPaidByReferees).map(async (referee) => {
+      const stakedPerp = await getStakedPerp(referee);
       const rebate = calculateRefereeRewards(
-        Number(referee.totalFeesPaid),
+        Number(aggregateFeesPaidByReferees[referee]),
         stakedPerp
       );
       return {
-        ...referee,
-        referrerPartner: referee.codeOwner,
+        referee,
+        totalFeesPaid: aggregateFeesPaidByReferees[referee],
         rebateUSD: rebate.rebateUSD,
         usd_cap: rebate?.tier.usd_cap,
       };
@@ -289,12 +313,14 @@ export default function Report(props: Props) {
   );
 
   const { data: referrerRewardsCSV, isSuccess: generatedReferrerRewardsCSV } =
-    useQuery(["referrerRewards"], () => getReferrerRewards(referralCodes, 2), {
+    useQuery(["referrerRewards"], () => getReferrerRewards(referralCodes, 1), {
       enabled: referralCodes?.length > 0,
     });
 
   const { data: refereeRewardsCSV, isSuccess: generatedRefereeRewardsCSV } =
-    useQuery(["refereeRewards"], () => getRefereeRewards());
+    useQuery(["refereeRewards"], () => getRefereeRewards(referralCodes, 1), {
+      enabled: referralCodes?.length > 0,
+    });
 
   const week = getLastNWeeks(2)[0];
   const start = dayjs(week.start * 1000)

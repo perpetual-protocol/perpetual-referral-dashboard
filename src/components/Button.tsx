@@ -11,6 +11,7 @@ type Props = {
   type?: ButtonType;
   isFullWidth?: boolean;
   className?: string;
+  isDisabled?: boolean;
 };
 
 export default function Button(props: Props) {
@@ -21,7 +22,7 @@ export default function Button(props: Props) {
     onClick,
     type = 'primary',
     isFullWidth = false,
-    className = ''
+    className = '',
   } = props;
 
   const getSizeClass = (size: Size) => {
@@ -38,11 +39,11 @@ export default function Button(props: Props) {
   const getTypeClass = (type: ButtonType) => {
     switch (type) {
       case 'primary':
-        return 'bg-perp-cyan text-perp-gray-300';
+        return 'bg-perp-cyan text-perp-gray-300 hover:bg-perp-cyan-secondary';
       case 'secondary':
-        return 'bg-perp-gray-200 text-white';
+        return 'bg-perp-gray-200 text-white hover:bg-gray-600';
       case 'destructive':
-        return 'bg-perp-red text-perp-gray-300';
+        return 'bg-perp-red text-perp-gray-300 hover:bg-red-600';
     }
   };
 
@@ -53,7 +54,7 @@ export default function Button(props: Props) {
       onClick={onClick}
       className={`${getSizeClass(size)} ${getTypeClass(
         type
-      )} font-semibold rounded-full flex items-center hover:bg-perp-cyan-secondary justify-center ${widthClass} ${className}`}
+      )} font-semibold rounded-full flex items-center justify-center ${widthClass} ${className}`}
     >
       {icon && <div className='mr-2 flex items-center'>{icon}</div>}
       {children}

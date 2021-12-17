@@ -7,13 +7,14 @@ type Props = {
   title: string;
   icon?: ReactElement;
   change?: number;
-  value: number;
+  value: string | number;
   format?: string;
   max?: number;
   isLoading?: boolean;
   subtext?: string;
   tooltip?: ReactElement;
   state?: 'normal' | 'error';
+  span?: number;
 };
 
 export default function StatCard(props: Props) {
@@ -27,13 +28,14 @@ export default function StatCard(props: Props) {
     isLoading,
     subtext,
     tooltip,
-    state = 'normal'
+    state = 'normal',
+    span = 4
   } = props;
   if (isLoading) {
     return (
       <Skeleton
-        height={160}
-        className="rounded-2xl bg-perp-gray-300 py-5 px-6 col-span-12 sm:col-span-6 md:col-span-4"
+        height={120}
+        className={`rounded-2xl bg-perp-gray-300 py-5 px-6 col-span-12 sm:col-span-6 md:col-span-${span}`}
       />
     );
   }
@@ -42,7 +44,7 @@ export default function StatCard(props: Props) {
   const textColorClass = state === 'normal' ? 'text-white' : 'text-perp-red';
 
   return (
-    <div className="rounded-2xl bg-perp-gray-300 py-5 px-6 col-span-12 sm:col-span-6 md:col-span-4">
+    <div className={`rounded-2xl bg-perp-gray-300 py-5 px-6 col-span-12 sm:col-span-6 md:col-span-${span}`}>
       <div className="flex items-center mb-4">
         <h6 className="text-perp-gray-50 text-sm pr-1">{title}</h6>
         {tooltip && <Tooltip content={tooltip}/>}
@@ -51,7 +53,7 @@ export default function StatCard(props: Props) {
         <div className="flex items-center">
           <div className="mr-2">{icon}</div>
           <h2 className={`${textColorClass} text-3xl font-bold mr-2`}>
-            {numeral(value).format(format || "0,0")}
+            { typeof (value) === 'string' ? value : numeral(value).format(format || "0,0")}
           </h2>
           {max && (
             <span className="text-perp-gray-50 text-sm">/ {max} MAX</span>

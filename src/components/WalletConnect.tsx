@@ -1,6 +1,5 @@
 import { useWeb3React } from "@web3-react/core";
 import { InjectedConnector } from "@web3-react/injected-connector";
-import { WalletConnectConnector } from "@web3-react/walletconnect-connector";
 import React from "react";
 import { useState } from "react";
 import Jazzicon from "react-jazzicon";
@@ -13,6 +12,7 @@ import Wallet from "../assets/wallet.svg";
 import MetamaskLogo from "../assets/metamask.svg";
 import { useEffect } from "react";
 import { useGlobalState } from "../AppStateHolder";
+import { WalletConnectConnector } from "../utils/WalletConnectConnector";
 
 type Props = {
   size?: Size;
@@ -38,7 +38,6 @@ export const walletconnect = new WalletConnectConnector({
   supportedChainIds: [1],
   qrcode: true,
   rpc: RPC_URLS,
-  pollingInterval: 6000,
 });
 
 export const connectorsByName: { [connectorName in ConnectorNames]: any } = {

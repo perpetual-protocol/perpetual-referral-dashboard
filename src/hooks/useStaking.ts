@@ -6,17 +6,9 @@ import StakingContractABI from '../contracts/Staking.json';
 import { useQuery } from 'react-query';
 import { formatUnits } from '@ethersproject/units';
 import { useGlobalState } from '../AppStateHolder';
+import { getStakedPerp } from '../views/report/Report';
 
 const CONTRACT_ADDRESS = '0x0f346e19F01471C02485DF1758cfd3d624E399B4';
-
-const getStakedPerp = async (account: string) => {
-  const provider = new JsonRpcProvider('https://main-light.eth.linkpool.io/');
-  const contract = new Contract(CONTRACT_ADDRESS, StakingContractABI, provider);
-  const response = (await contract.balanceOf(
-    account.toString()
-  )) as BigNumber;
-  return formatUnits(response.toString(), 18);
-};
 
 export default function useStaking() {
   const { canAccessApp, account } = useGlobalState();

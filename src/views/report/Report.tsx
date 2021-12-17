@@ -62,7 +62,7 @@ type TradingData = {
   totalFeesPaid: number;
 };
 
-async function getStakedPerp(account: string) {
+export async function getStakedPerp(account: string) {
   const response = await STAKED_SUBGRAPH(`
         query {
             staker(id: "${account.toLowerCase()}") {

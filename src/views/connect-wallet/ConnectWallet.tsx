@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import DiamondHands from "../../assets/diamond-hands.svg";
 
 import WalletConnect, {
@@ -12,12 +12,16 @@ type Props = {};
 
 export default function ConnectWallet(props: Props) {
   const { setViewOnlyAddress } = useGlobalState();
-  const onAddressChange = (event: ChangeEvent) => {
-    const address = event.target.value;
-    if (isAddress(address)) {
-      setViewOnlyAddress(address);
-    }
+
+  const getAddress = () => {
+    const urlQuery = new URLSearchParams(window.location.search);
+    const address = urlQuery.get('address');
+    return address || '';
   }
+
+  useEffect(() => {
+    setViewOnlyAddress(getAddress());
+  }, [])
 
   return (
     <div
@@ -33,10 +37,9 @@ export default function ConnectWallet(props: Props) {
         </h1>
       </div>
       <WalletConnect size="lg" />
-      <h1 className="text-white text-center text-xl font-semibold mt-1">or</h1>
-      <div className="w-full md:w-1/3 px-2 mt-2">
+      {/* <div className="w-full md:w-1/3 px-2 mt-2">
         <Input placeholder="Enter an address" onChange={onAddressChange} />
-      </div>
+      </div> */}
     </div>
   );
 }

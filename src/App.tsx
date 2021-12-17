@@ -19,6 +19,7 @@ import { Route } from "wouter";
 import Report from "./views/report/Report";
 import Notify from "bnc-notify";
 import AppStateProvider from "./AppStateHolder";
+import Admin from "./views/admin/Admin";
 echarts.use([
   LineChart,
   TitleComponent,
@@ -46,7 +47,9 @@ function getLibrary(provider) {
 export default function App() {
   const [isToastVisible, setIsToastVisible] = useState(false);
   const [toastText, setToastText] = useState("");
-  const showToast = (text: string) => {
+  const [toastType, setToastType] = useState<'normal' | 'error'>('normal');
+  const showToast = (text: string, type: 'error' | 'normal' = 'normal') => {
+    setToastType(type);
     setIsToastVisible(true);
     setToastText(text);
     setTimeout(() => {
@@ -64,11 +67,12 @@ export default function App() {
               <div className="flex flex-col w-full h-full font-body subpixel-antialiased">
                 <Route path="/" component={Home} />
                 <Route path="/report" component={Report} />
+                <Route path="/admin" component={Admin} />
               </div>
             </AppStateProvider>
           </Web3ReactProvider>
         </QueryClientProvider>
-        <Toast isVisible={isToastVisible} text={toastText} />
+        <Toast isVisible={isToastVisible} text={toastText} type={toastType} />
       </NotifyContext.Provider>
     </ToastContext.Provider>
   );

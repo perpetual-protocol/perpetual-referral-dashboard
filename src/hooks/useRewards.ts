@@ -9,26 +9,26 @@ export const refereeTiers = {
     staked: 0,
     usd_cap: 200,
     rebate: 0.4,
-    tier: 1
+    tier: 1,
   },
   2: {
     staked: 100,
     usd_cap: 500,
     rebate: 0.4,
-    tier: 2
+    tier: 2,
   },
   3: {
     staked: 1000,
     usd_cap: 800,
     rebate: 0.4,
-    tier: 3
+    tier: 3,
   },
   4: {
     staked: 10000,
     usd_cap: 1200,
     rebate: 0.4,
-    tier: 4
-  }
+    tier: 4,
+  },
 };
 
 export const referrerTiers = {
@@ -36,26 +36,30 @@ export const referrerTiers = {
     staked: 0,
     usd_cap: 100,
     rebate: 0.2,
-    tier: 1
+    tier: 1,
+    minFees: 0
   },
   2: {
     staked: 1000,
     usd_cap: 1000,
     rebate: 0.3,
-    tier: 2
+    tier: 2,
+    minFees: 0
   },
   3: {
     staked: 2000,
-    usd_cap: 2000,
+    usd_cap: Infinity,
     rebate: 0.4,
-    tier: 3
+    tier: 3,
+    minFees: 10000,
   },
   4: {
     staked: 10000,
-    usd_cap: 999999999999,
-    rebate: 0.5,
-    tier: 4
-  }
+    usd_cap: Infinity,
+    rebate: 0.55,
+    tier: 4,
+    minFees: 50000
+  },
 };
 
 function getCurrentWeek() {
@@ -100,8 +104,7 @@ export default function useRewards(referralCode?: string) {
 
   const { data: referrerRewards, isLoading } = useQuery(
     ["referrerRebate"],
-    () =>
-    getReferrerRewards(1, referralCode),
+    () => getReferrerRewards(1, referralCode),
     {
       enabled: !isLoadingStakingData && referralCode != null,
     }

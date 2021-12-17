@@ -10,9 +10,11 @@ import dayjs from "dayjs";
 import { last, nth, sumBy, zip } from "lodash";
 import { formatUnits } from "@ethersproject/units";
 import { useGlobalState } from "../AppStateHolder";
+import { referrerTiers } from "./useRewards";
+import useStaking from "./useStaking";
 
-const CONTRACT_ADDRESS = "0xF1d5BA04a25A6D88c468af932BFe2B1e78db7B45";
-const DOMAIN = 'https://referral.perp.exchange'
+const CONTRACT_ADDRESS = "0xcf76A8365A218D799f36030d89f86C8FBCC65a6E";
+const DOMAIN = "https://referral.perp.exchange";
 
 export async function callReferrerContract(
   provider: BaseProvider,
@@ -25,8 +27,9 @@ export async function callReferrerContract(
     provider
   );
   try {
-    const response = await contract[method](...params);
-    return response;
+    const tx = await contract[method](...params);
+    if (typeof tx === "string") return tx;
+    return tx;
   } catch (err) {
     console.error(err.message);
   }
@@ -103,8 +106,13 @@ function getVolumeChange(current: number, last: number) {
   return change;
 }
 
+async function createReferralCode(code: string, provider: BaseProvider) {
+  return await callReferrerContract(provider, 'createReferralCode', [code]);
+}
+
 export default function useReferral() {
   const { canAccessApp, account } = useGlobalState();
+  const { data: sPerp } = useStaking();
   const [_referees, _setReferees] = useState([]);
   const [_referralCode, _setReferralCode] = useState("");
   const days = getLastNWeeks().map((d) => ({
@@ -116,7 +124,7 @@ export default function useReferral() {
       .toDate(),
   }));
 
-  const { data: referrerResponse, isLoading: isLoadingReferralCodeData } =
+  const { data: referrerResponse, isLoading: isLoadingReferralCodeData, refetch: refetchReferralCode } =
     useQuery(
       ["referrerCode", { account }],
       () =>
@@ -127,6 +135,7 @@ export default function useReferral() {
             referrerCode {
               id
               referees
+              vipTier
             }
           }
         }
@@ -188,6 +197,19 @@ export default function useReferral() {
     referrerResponse?.data?.trader?.referrerCode?.referees?.length;
   const referees = referrerResponse?.data?.trader?.referrerCode?.referees;
   const referralLink = `${DOMAIN}?code=${referralCode}`;
+  const isVIP =
+    Number(referrerResponse?.data?.trader?.referrerCode?.vipTier) >= 3;
+  const _normalTier = Object.values(referrerTiers)
+    .filter((t) => t.minFees === 0)
+    .reverse()
+    .find((t) => sPerp >= t.staked);
+  const _vipTier = Number(
+    referrerResponse?.data?.trader?.referrerCode?.vipTier
+  );
+  const vipTier = isVIP ? _vipTier : _normalTier?.tier || 1;
+  const vipSince = Number(
+    referrerResponse?.data?.trader?.referrerCode?.vipSince
+  );
 
   return {
     referralCode,
@@ -200,6 +222,11 @@ export default function useReferral() {
     isLoadingDayDatas,
     isLoadingReferralCodeData,
     isLoadingWeeklyVolume,
-    referralLink
+    referralLink,
+    isVIP,
+    vipTier,
+    vipSince,
+    createReferralCode,
+    refetchReferralCode
   };
 }

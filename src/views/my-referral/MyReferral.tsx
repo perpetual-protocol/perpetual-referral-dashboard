@@ -1,18 +1,20 @@
-import React, { ChangeEvent } from "react";
+import React, { ChangeEvent, useState } from "react";
 
-import USDCLogo from '../../assets/usdc-logo.svg';
+import USDCLogo from "../../assets/usdc-logo.svg";
 import Button from "../../components/Button";
 import Copy from "../../assets/copy.svg";
 import useReferral from "../../hooks/useReferral";
 import StatCard from "../../components/StatCard";
 import PerpLogoGreen from "../../assets/logo-green.svg";
-import { useToast } from "../../App";
+import { useNotify, useToast } from "../../App";
 import { CopyToClipboard } from "react-copy-to-clipboard";
 import LineChart from "../../components/LineChart";
 import Wallet from "../../assets/wallet.svg";
 import RewardsTiers from "../../components/RewardsTiers";
 import useRewards from "../../hooks/useRewards";
 import dayjs from "dayjs";
+import Input from "../../components/Input";
+import { useWeb3React } from "@web3-react/core";
 
 type Props = {
   setActiveTab: Function;
@@ -30,13 +32,22 @@ export default function MyReferral(props: Props) {
     isLoadingDayDatas,
     isLoadingReferralCodeData,
     isLoadingWeeklyVolume,
+    isVIP,
+    vipTier,
+    createReferralCode,
+    refetchReferralCode
   } = useReferral();
+  const { notify } = useNotify();
+  const { library } = useWeb3React();
   const { showToast } = useToast();
   const {
     referrerRewards,
     isLoading: isLoadingRewards,
     nextReferrerTier,
   } = useRewards(referralCode);
+
+  const [ownReferralCode, setOwnReferralCode] = useState('');
+
   const chartData = {
     values: referralCodeDayData.map((v) => v.newUsers),
     axis: referralCodeDayData.map(
@@ -61,6 +72,28 @@ export default function MyReferral(props: Props) {
   const isLoading =
     isLoadingDayDatas || isLoadingReferralCodeData || isLoadingWeeklyVolume;
 
+  const onOwnReferralCodeChange = (event: ChangeEvent<Element>) => {
+    setOwnReferralCode((event.target as any).value);
+  }
+
+  const createOwnReferralCode = async () => {
+    if (!ownReferralCode) {
+      showToast('Please enter a referral code!', 'error');
+    }
+    try {
+    const tx = await createReferralCode(ownReferralCode, library.getSigner());
+      if (tx) {
+        const { emitter } = notify.hash(tx.hash);
+        emitter.on("txConfirmed", async () => {
+          await refetchReferralCode();
+        });
+      }
+    } catch (error) {
+      showToast('An error occurred', 'error');
+      console.error(error)
+    }
+  }
+
   return (
     <>
       {referralCode && (
@@ -84,12 +117,14 @@ export default function MyReferral(props: Props) {
             </CopyToClipboard>
           </div>
           <StatCard
+            span={3}
             icon={<PerpLogoGreen />}
             value={totalReferees}
             title="Total Traders Referred"
             isLoading={isLoading}
           />
           <StatCard
+            span={3}
             icon={<USDCLogo />}
             value={currentWeeklyReferralVolume}
             title="Weekly Trading Volume"
@@ -97,6 +132,7 @@ export default function MyReferral(props: Props) {
             isLoading={isLoading}
           />
           <StatCard
+            span={3}
             icon={<USDCLogo />}
             value={referrerRewards?.rebates[0]?.rebateUSD}
             title="Weekly Rewards"
@@ -109,12 +145,19 @@ export default function MyReferral(props: Props) {
                 </span>
                 <span>
                   The more transactions you make, the more perps rewards you
-                  will get, and the rewards will be credited to
-                  your account every week.
+                  will get, and the rewards will be credited to your account
+                  every week.
                 </span>
               </div>
             }
             state={cardState}
+          />
+          <StatCard
+            span={3}
+            value={vipTier}
+            title="Current Tier"
+            isLoading={false}
+            state="normal"
           />
           <div className="col-span-12 mb-8 mt-8">
             <h5 className="text-white font-bold text-lg mb-4">
@@ -164,10 +207,21 @@ export default function MyReferral(props: Props) {
       )}
       {!referralCode && (
         <div className="col-span-12">
-          <p className="text-center bg-perp-red p-4 rounded-lg">
-            Looks like you don't have a referral code yet. Contact the Perpetual
-            team to arrange one.
+          <h1 className="text-white text-2xl font-bold">
+            Generate Referral Code
+          </h1>
+          <p className="text-perp-gray-200">
+            Looks like you don't have a referral code to give out. Enter a code
+            below and hit submit to create it on-chain.
           </p>
+          <div className="flex items-center mt-4">
+            <div className="w-48 mr-4">
+              <Input onChange={onOwnReferralCodeChange} />
+            </div>
+            <div>
+              <Button onClick={createOwnReferralCode} size='sm'>Create</Button>
+            </div>
+          </div>
         </div>
       )}
     </>

@@ -1,23 +1,29 @@
-import { formatUnits } from "@ethersproject/units";
-import { groupBy, sum } from "lodash";
-import React from "react";
-import { useQuery } from "react-query";
+import { formatUnits } from '@ethersproject/units';
+import { groupBy, sum, sumBy } from 'lodash';
+import React from 'react';
+import { useQuery } from 'react-query';
 import {
   calculateRefereeRewards,
-  calculateReferrerRewards,
-} from "../../hooks/useRewards";
-import { getLastNWeeks } from "../../hooks/useTrading";
-import { STAKED_SUBGRAPH, SUBGRAPH } from "../../utils/http";
-import { parse } from "json2csv";
-import { CSVLink } from "react-csv";
-import Button from "../../components/Button";
-import dayjs from "dayjs";
+  calculateReferrerRewards
+} from '../../hooks/useRewards';
+import { getLastNWeeks } from '../../hooks/useTrading';
+import { STAKED_SUBGRAPH, SUBGRAPH } from '../../utils/http';
+import { parse } from 'json2csv';
+import { CSVLink } from 'react-csv';
+import Button from '../../components/Button';
+import dayjs from 'dayjs';
 
 type Props = {};
 
-const rewardsFields = ["owner", "referrerPartner", "usd_cap", "totalFeesPaid", "rebateUSD"];
+const rewardsFields = [
+  'owner',
+  'referrerPartner',
+  'usd_cap',
+  'totalFeesPaid',
+  'rebateUSD'
+];
 
-const referrerRewardsFields = ["referrer", "usd_cap", "rebateUSD"];
+const referrerRewardsFields = ['referrer', 'code', 'usd_cap', 'rebateUSD'];
 
 async function getReferralCodes() {
   let allReferralCodes = [];
@@ -39,7 +45,7 @@ async function getReferralCodes() {
     );
     const referralCodes = (
       referralCodesResponse?.data?.referralCodes || []
-    ).map((code) => ({ id: code.id, owner: code.referrer.id }));
+    ).map(code => ({ id: code.id, owner: code.referrer.id }));
     allReferralCodes = [...allReferralCodes, ...referralCodes];
     if (referralCodes.length >= 1000) {
       needToFetchMoreCodes = true;
@@ -70,28 +76,20 @@ export async function getStakedPerp(account: string) {
             }
         }
     `);
-  return Number(formatUnits(response?.data?.staker?.totalStaked || "0", 18));
+  return Number(formatUnits(response?.data?.staker?.totalStaked || '0', 18));
 }
 
-async function getFeesPaidByReferralCode(referralCodes: ReferralAndOwner[]) {
+async function getFeesByTraderByReferralCode(
+  referralCodes: ReferralAndOwner[],
+  weeksToGoBack: number
+) {
   // last complete week Sunday UTC 00:00 to Sunday UTC 00:00
-  const week = getLastNWeeks(2)[0];
   const feesPaid = await Promise.all(
-    referralCodes.map(async (code) => {
-      const dayDatasResponse = await SUBGRAPH(
-        `query {
-                referralCodeDayDatas(where: { referralCode: "${code.id}", date_gte: ${week.start}, date_lt: ${week.end}}) {
-                    fees
-                }
-            }`
-      );
-      const dayDatas = dayDatasResponse.data.referralCodeDayDatas || [];
-      const totalFeesPaid = sum(
-        dayDatas.map((d) => Number(formatUnits(d.fees, 18)))
-      );
+    referralCodes.map(async code => {
+      const traderFeesPaid = await getTotalFeesPaidByReferralCode(1, code.id);
       return {
         ...code,
-        totalFeesPaid,
+        traderFeesPaid
       };
     })
   );
@@ -99,55 +97,58 @@ async function getFeesPaidByReferralCode(referralCodes: ReferralAndOwner[]) {
 }
 
 export async function getReferrerRewards(
-  weeksToGoBack: number,
-  referralCode?: string
+  referralCodes: ReferralAndOwner[],
+  weeksToGoBack: number
 ) {
   // gets all the fees paid by traders
-  const refereeFees = await getFeesPaidByReferees(weeksToGoBack, referralCode);
-  console.log('fees', refereeFees);
-  // group them (the traders) by the referrer partner
-  const refereeDataGroupedByReferrer = groupBy(refereeFees, "codeOwner");
-
+  const codeFees = await getFeesByTraderByReferralCode(
+    referralCodes,
+    weeksToGoBack
+  );
   const rebates = await Promise.all(
     // calculate the rebate for the referrer partner by calculating
     // the rebate for the 'trader' with the amount of staked perp
     // for the 'referrer partner' but using the 'referrer partner' tiers
-    (Object.keys(refereeDataGroupedByReferrer) || []).map(async (referrer) => {
-      const stakedPerp = await getStakedPerp(referrer);
+    (Object.values(codeFees) || []).map(async referrerAndFees => {
+      const stakedPerp = await getStakedPerp(referrerAndFees.owner);
       let referrerRebate = 0;
       let tier = 0;
       let usd_cap = 0;
-      for (const refereeData of refereeDataGroupedByReferrer[referrer]) {
+      for (const feesPaidByTrader of Object.values(referrerAndFees.traderFeesPaid)) {
         const rebate = calculateReferrerRewards(
           stakedPerp,
-          refereeData.totalFeesPaid
+          feesPaidByTrader
         );
         referrerRebate = referrerRebate + rebate.rebateUSD;
         usd_cap = rebate.tier.usd_cap;
         tier = rebate.tier.tier;
       }
       return {
-        referrer,
+        referrer: referrerAndFees.owner,
         rebateUSD: referrerRebate,
+        code: referrerAndFees.id,
         tier,
-        usd_cap,
+        usd_cap
       };
     })
   );
   const csv = parse(rebates, { fields: referrerRewardsFields });
   return {
     csv,
-    rebates,
+    rebates
   };
 }
 
-async function getFeesPaidByReferees(weeksToGoBack: number, referralCode?: string,) {
+async function getFeesPaidByReferees(
+  weeksToGoBack: number,
+  referralCode?: string
+) {
   const week = getLastNWeeks(weeksToGoBack)[0];
-  console.log('generating for', week)
+  console.log('generating for', week);
   let allRefereesWithFeesPaid: Record<string, any>[] = [];
   let needToFetchMoreReferees = true;
   let skip = 0;
-  let additionalFilter = referralCode ? `, refereeCode: "${referralCode}"` : "";
+  let additionalFilter = referralCode ? `, refereeCode: "${referralCode}"` : '';
   // don't know how many total codes there are
   // so we run an exhaustive request loops to
   // check if there are more to get a full list
@@ -172,13 +173,13 @@ async function getFeesPaidByReferees(weeksToGoBack: number, referralCode?: strin
     ).data?.traders;
     for (const referee of referees) {
       const feesPaid = sum(
-        (referee.dayData || []).map((d) => Number(formatUnits(d.fee, 18)))
+        (referee.dayData || []).map(d => Number(formatUnits(d.fee, 18)))
       );
       allRefereesWithFeesPaid.push({
         totalFeesPaid: feesPaid,
         owner: referee.id,
         code: referee.refereeCode.id,
-        codeOwner: referee.refereeCode.referrer.id,
+        codeOwner: referee.refereeCode.referrer.id
       });
     }
 
@@ -192,11 +193,76 @@ async function getFeesPaidByReferees(weeksToGoBack: number, referralCode?: strin
   return allRefereesWithFeesPaid;
 }
 
+async function getTotalFeesPaidByReferralCode(
+  weeksToGoBack: number,
+  referralCode?: string
+) {
+  const week = getLastNWeeks(weeksToGoBack)[0];
+  let needToFetchMoreDays = true;
+  let needToFetchMoreTraderData = true;
+  let skip = 0;
+  let skipTraderData = 0;
+  let additionalFilter = referralCode
+    ? `, referralCode: "${referralCode}"`
+    : '';
+  let totalFeesPaid = 0;
+  const feesPerTrader: Record<string, number> = {};
+
+  // don't know how many total codes there are
+  // so we run an exhaustive request loops to
+  // check if there are more to get a full list
+  while (needToFetchMoreDays) {
+    while (needToFetchMoreTraderData) {
+      const dayDatas = (
+        await SUBGRAPH(`
+        query {
+          referralCodeDayDatas(where: { date_gte: ${week.start}, date_lt: ${week.end}${additionalFilter} }) {
+            id
+            tradingVolume
+            date
+            fees
+            traderData(first: 1000, skip: ${skipTraderData}) {
+              id
+              fees
+              trader
+            }
+          }
+        }
+      `)
+      ).data?.referralCodeDayDatas;
+
+      const traderData = dayDatas?.traderData;
+      for (const data of traderData) {
+        if (!feesPerTrader[data.trader]) {
+          feesPerTrader[data.trader] = Number(data.fees);
+        } else {
+          feesPerTrader[data.trader] = feesPerTrader[data.trader] + Number(data.fees);
+        }
+      }
+
+      if (dayDatas?.length >= 999) {
+        needToFetchMoreDays = true;
+        skip = skip + 999;
+      } else {
+        needToFetchMoreDays = false;
+      }
+
+      if (dayDatas?.traderData?.length >= 999) {
+        needToFetchMoreTraderData = true;
+        skipTraderData = skipTraderData + 999;
+      } else {
+        needToFetchMoreTraderData = false;
+      }
+    }
+  }
+  return feesPerTrader;
+}
+
 async function getRefereeRewards() {
   // list of all referees and their paid fees
   const refereeList = await getFeesPaidByReferees(2);
   const rewards = await Promise.all(
-    refereeList.map(async (referee) => {
+    refereeList.map(async referee => {
       const stakedPerp = await getStakedPerp(referee.owner);
       const rebate = calculateRefereeRewards(
         Number(referee.totalFeesPaid),
@@ -206,7 +272,7 @@ async function getRefereeRewards() {
         ...referee,
         referrerPartner: referee.codeOwner,
         rebateUSD: rebate.rebateUSD,
-        usd_cap: rebate?.tier.usd_cap,
+        usd_cap: rebate?.tier.usd_cap
       };
     })
   );
@@ -215,42 +281,36 @@ async function getRefereeRewards() {
 }
 
 export default function Report(props: Props) {
-  const { data: referralCodes } = useQuery(["reportReferralCodes"], () =>
+  const { data: referralCodes } = useQuery(['reportReferralCodes'], () =>
     getReferralCodes()
   );
 
-  const { data: referralCodesTradingData } = useQuery(
-    ["reportReferralCodesTradingData"],
-    () => getFeesPaidByReferralCode(referralCodes),
-    {
-      enabled: referralCodes?.length > 0,
-    }
-  );
-
   const { data: referrerRewardsCSV, isSuccess: generatedReferrerRewardsCSV } =
-    useQuery(["referrerRewards"], () => getReferrerRewards(2));
+    useQuery(['referrerRewards'], () => getReferrerRewards(referralCodes, 2), {
+      enabled: referralCodes?.length > 0
+    });
 
   const { data: refereeRewardsCSV, isSuccess: generatedRefereeRewardsCSV } =
-    useQuery(["refereeRewards"], () => getRefereeRewards());
+    useQuery(['refereeRewards'], () => getRefereeRewards());
 
   const week = getLastNWeeks(2)[0];
   const start = dayjs(week.start * 1000)
     .utc()
-    .format("DD-MM-YYYY HH:mm");
+    .format('DD-MM-YYYY HH:mm');
   const end = dayjs(week.end * 1000)
     .utc()
-    .format("DD-MM-YYYY HH:mm");
+    .format('DD-MM-YYYY HH:mm');
 
   return (
-    <div className="flex items-center justify-center w-full h-full flex-col">
-      <span className="text-white">
+    <div className='flex items-center justify-center w-full h-full flex-col'>
+      <span className='text-white'>
         Generated rewards for {start} to {end}
       </span>
-      <div className="mb-2 mt-2">
+      <div className='mb-2 mt-2'>
         {generatedReferrerRewardsCSV && (
           <CSVLink
             filename={`perp-referrer-rewards-${start}to${end}.csv`}
-            data={referrerRewardsCSV.csv || ""}
+            data={referrerRewardsCSV.csv || ''}
           >
             <Button onClick={() => false}>Download Referrer CSV</Button>
           </CSVLink>
@@ -260,7 +320,7 @@ export default function Report(props: Props) {
         {generatedRefereeRewardsCSV && (
           <CSVLink
             filename={`perp-referee-rewards-${start}-${end}.csv`}
-            data={refereeRewardsCSV || ""}
+            data={refereeRewardsCSV || ''}
           >
             <Button onClick={() => false}>Download Referee CSV</Button>
           </CSVLink>

@@ -205,7 +205,6 @@ async function getTotalFeesPaidByReferralCode(
   let additionalFilter = referralCode
     ? `, referralCode: "${referralCode}"`
     : '';
-  let totalFeesPaid = 0;
   const feesPerTrader: Record<string, number> = {};
 
   // don't know how many total codes there are
@@ -231,6 +230,7 @@ async function getTotalFeesPaidByReferralCode(
       `)
       ).data?.referralCodeDayDatas;
 
+      console.log('bingbong', dayDatas)
       const traderData = dayDatas?.traderData;
       for (const data of traderData) {
         if (!feesPerTrader[data.trader]) {

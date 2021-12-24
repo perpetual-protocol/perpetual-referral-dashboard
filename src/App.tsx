@@ -63,8 +63,7 @@ export default function App() {
             <AppStateProvider>
               <div className="flex flex-col w-full h-full font-body subpixel-antialiased">
                 <a href="https://referral.perp.com" target="_blank" className='flex font-semibold w-full p-4 bg-perp-light-green justify-center'>
-                  V2 of the referral program has launched! The Perpetual Protocol V1 referral program has been stopped.
-                  You can go to V2 by clicking this banner.
+                  Perpetual Protocol V2 has now launched! V1 of the program will be deprecated and rewards will end on the 1st of January 2022. Please click this banner to access Perpetual Protocol's V2 referral program.
                 </a>
                 <Route path="/" component={Home} />
                 <Route path="/report" component={Report} />

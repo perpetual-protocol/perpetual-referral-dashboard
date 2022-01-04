@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Web3ReactProvider } from "@web3-react/core";
 import { QueryClient, QueryClientProvider } from "react-query";
 import Home from "./views/home/Home";
@@ -15,7 +15,7 @@ import {
   GridComponent,
 } from "echarts/components";
 import { CanvasRenderer } from "echarts/renderers";
-import { Route } from "wouter";
+import { Redirect, Route } from "wouter";
 import Report from "./views/report/Report";
 import Notify from "bnc-notify";
 import AppStateProvider from "./AppStateHolder";
@@ -44,35 +44,11 @@ function getLibrary(provider) {
 }
 
 export default function App() {
-  const [isToastVisible, setIsToastVisible] = useState(false);
-  const [toastText, setToastText] = useState("");
-  const showToast = (text: string) => {
-    setIsToastVisible(true);
-    setToastText(text);
-    setTimeout(() => {
-      setIsToastVisible(false);
-      setToastText("");
-    }, 4000);
-  };
+  useEffect(() => {
+    window.location.href = "https://referral.perp.com";
 
+  }, [])
   return (
-    <ToastContext.Provider value={{ showToast }}>
-      <NotifyContext.Provider value={{ notify }}>
-        <QueryClientProvider client={queryClient}>
-          <Web3ReactProvider getLibrary={getLibrary}>
-            <AppStateProvider>
-              <div className="flex flex-col w-full h-full font-body subpixel-antialiased">
-                <a href="https://referral.perp.com" target="_blank" className='flex font-semibold w-full p-4 bg-perp-light-green justify-center'>
-                  Perpetual Protocol V2 has now launched! V1 of the program will be deprecated and rewards will end on the 1st of January 2022. Please click this banner to access Perpetual Protocol's V2 referral program.
-                </a>
-                <Route path="/" component={Home} />
-                <Route path="/report" component={Report} />
-              </div>
-            </AppStateProvider>
-          </Web3ReactProvider>
-        </QueryClientProvider>
-        <Toast isVisible={isToastVisible} text={toastText} />
-      </NotifyContext.Provider>
-    </ToastContext.Provider>
+    <div></div>
   );
 }
